@@ -5,6 +5,8 @@ import { IoSearch, IoFilter, IoArrowBack } from 'react-icons/io5';
 import ItemCard from '../../components/ItemCard/ItemCard.jsx';
 import './ItemGallery.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const ItemGallery = () => {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -20,7 +22,7 @@ const ItemGallery = () => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('http://backend:8080/api/items');
+        const response = await fetch(`${API_BASE}/api/items`);
         const data = await response.json();
         setItems(data);
         setFilteredItems(data);

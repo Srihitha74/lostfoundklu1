@@ -5,6 +5,8 @@ import { IoArrowBack, IoLocation, IoTime, IoChatbubble, IoClose, IoSend } from '
 import axios from 'axios';
 import './ItemDetail.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ const ItemDetail = () => {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const response = await axios.get(`http://backend:8080/api/items/${id}`);
+        const response = await axios.get(`${API_BASE}/api/items/${id}`);
         const itemData = response.data;
         const mappedItem = {
           id: itemData.id,
@@ -28,7 +30,7 @@ const ItemDetail = () => {
           date: new Date(itemData.date).toLocaleDateString(),
           category: itemData.category,
           status: itemData.status.toLowerCase(),
-          images: itemData.imageUrl ? [`http://backend:8080${itemData.imageUrl}`] : [],
+          images: itemData.imageUrl ? [`${API_BASE}${itemData.imageUrl}`] : [],
           reportedBy: itemData.user ? itemData.user.name : 'Unknown'
         };
         setItem(mappedItem);

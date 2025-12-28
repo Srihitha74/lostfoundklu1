@@ -5,6 +5,8 @@ import { IoArrowBack, IoArrowForward, IoCloudUpload, IoCheckmark } from 'react-i
 import axios from 'axios';
 import './ItemReporting.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const ItemReporting = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -59,7 +61,7 @@ const ItemReporting = () => {
           const formDataToSend = new FormData();
           formDataToSend.append('image', file);
 
-          const response = await axios.post('http://backend:8080/api/items/suggest-category', formDataToSend, {
+          const response = await axios.post(`${API_BASE}/api/items/suggest-category`, formDataToSend, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'multipart/form-data'
@@ -138,7 +140,7 @@ const ItemReporting = () => {
         formDataToSend.append('image', file);
       }
 
-      await axios.post('http://backend:8080/api/items', formDataToSend, {
+      await axios.post(`${API_BASE}/api/items`, formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
