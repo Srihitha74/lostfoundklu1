@@ -75,7 +75,7 @@ const AuthModal = ({ isOpen, onClose }) => {
       try {
         if (isLogin) {
           // Login
-          const response = await fetch('http://localhost:8085/api/auth/login', {
+          const response = await fetch('http://backend:8080/api/auth/login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             return;
           }
 
-          const response = await fetch('http://localhost:8085/api/auth/register', {
+          const response = await fetch('http://backend:8080/api/auth/register', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ const AuthModal = ({ isOpen, onClose }) => {
       }
 
       // After successful Firebase auth, send user data to backend
-      const response = await fetch('http://localhost:8085/api/auth/firebase-login', {
+      const response = await fetch('http://backend:8080/api/auth/firebase-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ const AuthModal = ({ isOpen, onClose }) => {
         try {
           const fcmToken = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY });
           if (fcmToken) {
-            await fetch('http://localhost:8085/api/auth/update-fcm-token', {
+            await fetch('http://backend:8080/api/auth/update-fcm-token', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

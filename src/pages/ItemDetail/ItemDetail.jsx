@@ -18,7 +18,7 @@ const ItemDetail = () => {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const response = await axios.get(`http://localhost:8085/api/items/${id}`);
+        const response = await axios.get(`http://backend:8080/api/items/${id}`);
         const itemData = response.data;
         const mappedItem = {
           id: itemData.id,
@@ -28,7 +28,7 @@ const ItemDetail = () => {
           date: new Date(itemData.date).toLocaleDateString(),
           category: itemData.category,
           status: itemData.status.toLowerCase(),
-          images: itemData.imageUrl ? [`http://localhost:8085${itemData.imageUrl}`] : [],
+          images: itemData.imageUrl ? [`http://backend:8080${itemData.imageUrl}`] : [],
           reportedBy: itemData.user ? itemData.user.name : 'Unknown'
         };
         setItem(mappedItem);

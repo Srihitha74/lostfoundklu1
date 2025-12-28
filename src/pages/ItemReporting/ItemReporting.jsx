@@ -59,7 +59,7 @@ const ItemReporting = () => {
           const formDataToSend = new FormData();
           formDataToSend.append('image', file);
 
-          const response = await axios.post('http://localhost:8085/api/items/suggest-category', formDataToSend, {
+          const response = await axios.post('http://backend:8080/api/items/suggest-category', formDataToSend, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'multipart/form-data'
@@ -138,7 +138,7 @@ const ItemReporting = () => {
         formDataToSend.append('image', file);
       }
 
-      await axios.post('http://localhost:8085/api/items', formDataToSend, {
+      await axios.post('http://backend:8080/api/items', formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

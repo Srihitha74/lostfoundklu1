@@ -20,7 +20,7 @@ const ItemGallery = () => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('http://localhost:8085/api/items');
+        const response = await fetch('http://backend:8080/api/items');
         const data = await response.json();
         setItems(data);
         setFilteredItems(data);
