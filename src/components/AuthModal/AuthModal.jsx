@@ -70,7 +70,8 @@ const AuthModal = ({ isOpen, onClose }) => {
 
     // Check if Firebase is properly configured (not placeholder values)
     const isFirebaseConfigured = import.meta.env.VITE_FIREBASE_API_KEY &&
-                                 !import.meta.env.VITE_FIREBASE_API_KEY.includes('your_');
+                                  !import.meta.env.VITE_FIREBASE_API_KEY.includes('your_') &&
+                                  import.meta.env.VITE_FIREBASE_API_KEY.length > 10;
 
     if (!isFirebaseConfigured) {
       // Fallback to original JWT authentication

@@ -13,13 +13,24 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Check if Firebase is properly configured
+const isFirebaseConfigured = firebaseConfig.apiKey &&
+                            !firebaseConfig.apiKey.includes('your_') &&
+                            firebaseConfig.apiKey.length > 10;
 
-// Initialize Firebase Authentication
-export const auth = getAuth(app);
+let app, auth, messaging;
 
-// Initialize Firebase Cloud Messaging
-export const messaging = getMessaging(app);
+if (isFirebaseConfigured) {
+  // Initialize Firebase only if properly configured
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  messaging = getMessaging(app);
+} else {
+  // Export null/undefined for Firebase services when not configured
+  app = null;
+  auth = null;
+  messaging = null;
+}
 
+export { auth, messaging };
 export default app;

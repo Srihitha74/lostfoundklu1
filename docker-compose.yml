@@ -1,44 +1,53 @@
-version: '3.8'
+version: "3.8"
+
 services:
   db:
-    image: mysql:8.0
+    image: postgres:15
+    container_name: lostfound-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: Sri@513947
-      MYSQL_DATABASE: lostfound_db
+      POSTGRES_DB: lostfound_db_9acj
+      POSTGRES_USER: lostfound_db_9acj_user
+      POSTGRES_PASSWORD: 1BiS1h7IyQYSa25HeNNLNhHRd4yKM9Ch
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - pg_data:/var/lib/postgresql/data
     networks:
       - app-network
+
   backend:
     build:
       context: ./lostfound-backend
       dockerfile: Dockerfile
+    container_name: lostfound-backend
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/lostfound_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=Sri@513947
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/lostfound_db_9acj
+      SPRING_DATASOURCE_USERNAME: lostfound_db_9acj_user
+      SPRING_DATASOURCE_PASSWORD: 1BiS1h7IyQYSa25HeNNLNhHRd4yKM9Ch
     depends_on:
       - db
     networks:
       - app-network
+
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: lostfound-frontend
     ports:
       - "3000:3000"
     environment:
-      - VITE_BACKEND_URL=http://backend:8080
+      VITE_BACKEND_URL: http://backend:8080
     depends_on:
       - backend
     networks:
       - app-network
+
 networks:
   app-network:
     driver: bridge
+
 volumes:
-  mysql_data:
+  pg_data:
