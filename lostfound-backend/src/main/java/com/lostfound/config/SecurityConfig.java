@@ -40,7 +40,7 @@ public class SecurityConfig {
         http.cors().and().csrf().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/uploads/**").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/firebase-login", "/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/items", "/api/items/*").permitAll()
                 .anyRequest().authenticated()
             );
