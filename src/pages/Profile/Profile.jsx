@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,7 @@ const Profile = () => {
       }
 
       try {
-        const response = await fetch('http://localhost:8085/api/auth/profile', {
+        const response = await fetch(`${API_BASE}/api/auth/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -50,7 +52,7 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('http://localhost:8085/api/auth/profile', {
+      const response = await fetch(`${API_BASE}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

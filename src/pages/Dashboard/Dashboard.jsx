@@ -6,6 +6,8 @@ import axios from 'axios';
 import ItemCard from '../../components/ItemCard/ItemCard.jsx';
 import './Dashboard.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const Dashboard = () => {
   const [userName] = useState('User');
   const [userItems, setUserItems] = useState([]);
@@ -23,7 +25,7 @@ const Dashboard = () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const response = await axios.get('http://localhost:8085/api/items/my', {
+        const response = await axios.get(`${API_BASE}/api/items/my`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserItems(response.data);
@@ -38,7 +40,7 @@ const Dashboard = () => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       const token = localStorage.getItem('token');
       try {
-        await axios.delete(`http://localhost:8085/api/items/${itemId}`, {
+        await axios.delete(`${API_BASE}/api/items/${itemId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         // Refresh the items list
