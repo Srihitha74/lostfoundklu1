@@ -31,7 +31,13 @@ public class ItemService {
             if (existing.getId().equals(newItem.getId())) continue;
             if (existing.getStatus().equals(newItem.getStatus())) continue;
 
-            if (!existing.getAiLabels().isEmpty() && !newItem.getAiLabels().isEmpty()) {
+            // Check if categories match or have common AI labels
+            boolean categoryMatch = existing.getCategory() != null && newItem.getCategory() != null &&
+                                   existing.getCategory().equalsIgnoreCase(newItem.getCategory());
+
+            boolean labelMatch = hasCommonLabels(existing.getAiLabels(), newItem.getAiLabels());
+
+            if ((categoryMatch || labelMatch) && !existing.getAiLabels().isEmpty() && !newItem.getAiLabels().isEmpty()) {
                 existing.setAiMatched(true);
                 newItem.setAiMatched(true);
 
@@ -42,11 +48,16 @@ public class ItemService {
                 itemRepository.save(newItem);
 
                 System.out.println("🤖 AI MATCH FOUND BETWEEN " +
-                        newItem.getId() + " AND " + existing.getId());
+                        newItem.getId() + " (" + newItem.getTitle() + ") AND " + existing.getId() + " (" + existing.getTitle() + ")");
 
                 break;
             }
         }
+    }
+
+    private boolean hasCommonLabels(List<String> labels1, List<String> labels2) {
+        if (labels1 == null || labels2 == null) return false;
+        return labels1.stream().anyMatch(label -> labels2.contains(label));
     }
 
     public Optional<Item> findById(Long id) {
