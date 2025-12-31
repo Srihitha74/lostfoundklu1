@@ -38,7 +38,7 @@ const ItemCard = ({ item, onDelete }) => {
       onClick={() => navigate(`/item/${item.id}`)}
     >
       <div className="item-image">
-        <img src={item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/placeholder-image.jpg'} alt={item.title} />
+        <img src={item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/placeholder-image.svg'} alt={item.title} />
         <div className="item-overlay">
           <motion.button 
             className="view-details-btn"

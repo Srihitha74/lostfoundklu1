@@ -26,6 +26,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/lostfound_db_9acj
       SPRING_DATASOURCE_USERNAME: lostfound_db_9acj_user
       SPRING_DATASOURCE_PASSWORD: 1BiS1h7IyQYSa25HeNNLNhHRd4yKM9Ch
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       - db
     networks:
@@ -51,3 +53,4 @@ networks:
 
 volumes:
   pg_data:
+  uploads_data:
