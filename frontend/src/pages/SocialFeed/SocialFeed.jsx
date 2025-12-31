@@ -13,6 +13,8 @@ import {
 import axios from 'axios';
 import './SocialFeed.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const SocialFeed = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -24,7 +26,7 @@ const SocialFeed = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axios.get('http://localhost:8085/api/items');
+        const response = await axios.get(`${API_BASE}/api/items`);
         const mappedPosts = response.data.map(item => ({
           id: item.id,
           type: item.status.toLowerCase(),
@@ -36,7 +38,7 @@ const SocialFeed = () => {
           userInitials: item.user ? item.user.name.charAt(0).toUpperCase() : 'U',
           username: item.user ? item.user.name : 'Unknown',
           contactInfo: item.user ? item.user.email : '',
-          image: item.imageUrl ? `http://localhost:8085${item.imageUrl}` : '/default-image.png' // Assuming a default image
+          image: item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/default-image.png' // Assuming a default image
         }));
         setPosts(mappedPosts);
         setFilteredPosts(mappedPosts);

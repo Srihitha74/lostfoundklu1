@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { IoLocation, IoTime, IoChatbubble, IoClose } from 'react-icons/io5';
 import './ItemCard.css';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+
 const ItemCard = ({ item, onDelete }) => {
   const navigate = useNavigate();
   const [showMatchModal, setShowMatchModal] = useState(false);
@@ -15,7 +17,7 @@ const ItemCard = ({ item, onDelete }) => {
 
     setLoadingMatch(true);
     try {
-      const response = await fetch(`http://localhost:8085/api/items/${item.matchedItemId}`);
+      const response = await fetch(`${API_BASE}/api/items/${item.matchedItemId}`);
       if (response.ok) {
         const data = await response.json();
         setMatchedItem(data);
@@ -36,7 +38,7 @@ const ItemCard = ({ item, onDelete }) => {
       onClick={() => navigate(`/item/${item.id}`)}
     >
       <div className="item-image">
-        <img src={item.imageUrl ? `http://localhost:8085${item.imageUrl}` : '/placeholder-image.jpg'} alt={item.title} />
+        <img src={item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/placeholder-image.jpg'} alt={item.title} />
         <div className="item-overlay">
           <motion.button 
             className="view-details-btn"
