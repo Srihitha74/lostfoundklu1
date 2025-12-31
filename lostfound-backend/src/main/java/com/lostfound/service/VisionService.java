@@ -1,18 +1,14 @@
 package com.lostfound.service;
 
-import com.google.cloud.vision.v1.*;
-import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.Base64;
 
 @Service
 public class VisionService {
@@ -64,38 +60,63 @@ public class VisionService {
     }
 
     private List<String> analyzeImageWithVisionAPI(String imagePath) throws Exception {
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new Exception("Google Cloud Vision API key not configured");
+        }
+
         // Read image file
         byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
 
-        // Create Vision API client
-        try (ImageAnnotatorClient vision = ImageAnnotatorClient.create()) {
-            // Build the image request
-            ByteString imgBytes = ByteString.copyFrom(imageBytes);
-            Image img = Image.newBuilder().setContent(imgBytes).build();
+        // Build REST API request
+        String url = "https://vision.googleapis.com/v1/images:annotate?key=" + apiKey;
 
-            // Set up the feature for label detection
-            Feature feat = Feature.newBuilder().setType(Feature.Type.LABEL_DETECTION).build();
-            AnnotateImageRequest request = AnnotateImageRequest.newBuilder()
-                    .addFeatures(feat)
-                    .setImage(img)
-                    .build();
+        Map<String, Object> requestBody = Map.of(
+            "requests", List.of(
+                Map.of(
+                    "image", Map.of("content", base64Image),
+                    "features", List.of(Map.of("type", "LABEL_DETECTION", "maxResults", 10))
+                )
+            )
+        );
 
-            // Perform the request
-            BatchAnnotateImagesResponse response = vision.batchAnnotateImages(List.of(request));
-            List<AnnotateImageResponse> responses = response.getResponsesList();
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-            if (responses.isEmpty() || responses.get(0).hasError()) {
-                throw new Exception("Vision API request failed");
-            }
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-            // Extract labels
-            List<String> labels = new ArrayList<>();
-            for (EntityAnnotation annotation : responses.get(0).getLabelAnnotationsList()) {
-                labels.add(annotation.getDescription().toLowerCase());
-            }
-
-            return labels;
+        if (response.getStatusCode() != HttpStatus.OK) {
+            throw new Exception("Vision API request failed with status: " + response.getStatusCode());
         }
+
+        // Parse response
+        Map responseBody = response.getBody();
+        List<Map> responses = (List<Map>) responseBody.get("responses");
+        if (responses == null || responses.isEmpty()) {
+            throw new Exception("No responses from Vision API");
+        }
+
+        Map firstResponse = responses.get(0);
+        if (firstResponse.containsKey("error")) {
+            throw new Exception("Vision API error: " + firstResponse.get("error"));
+        }
+
+        List<Map> labelAnnotations = (List<Map>) firstResponse.get("labelAnnotations");
+        if (labelAnnotations == null) {
+            return new ArrayList<>();
+        }
+
+        List<String> labels = new ArrayList<>();
+        for (Map annotation : labelAnnotations) {
+            String description = (String) annotation.get("description");
+            if (description != null) {
+                labels.add(description.toLowerCase());
+            }
+        }
+
+        return labels;
     }
 
     private String mapLabelsToCategory(List<String> labels) {
