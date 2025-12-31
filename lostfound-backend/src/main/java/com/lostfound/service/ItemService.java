@@ -18,8 +18,8 @@ public class ItemService {
     public Item save(Item item) {
         Item savedItem = itemRepository.save(item);
 
-        // TODO: Re-enable AI matching after Vision API is properly configured
-        // performAiMatching(savedItem);
+        // Perform keyword-based matching for newly created items
+        performAiMatching(savedItem);
 
         return savedItem;
     }
@@ -31,13 +31,16 @@ public class ItemService {
             if (existing.getId().equals(newItem.getId())) continue;
             if (existing.getStatus().equals(newItem.getStatus())) continue;
 
+            // Check keyword similarity in title and description
+            boolean keywordMatch = hasKeywordMatch(newItem, existing);
+
             // Check if categories match or have common AI labels
             boolean categoryMatch = existing.getCategory() != null && newItem.getCategory() != null &&
                                    existing.getCategory().equalsIgnoreCase(newItem.getCategory());
 
             boolean labelMatch = hasCommonLabels(existing.getAiLabels(), newItem.getAiLabels());
 
-            if ((categoryMatch || labelMatch) && !existing.getAiLabels().isEmpty() && !newItem.getAiLabels().isEmpty()) {
+            if (keywordMatch || (categoryMatch && labelMatch && !existing.getAiLabels().isEmpty() && !newItem.getAiLabels().isEmpty())) {
                 existing.setAiMatched(true);
                 newItem.setAiMatched(true);
 
@@ -47,12 +50,28 @@ public class ItemService {
                 itemRepository.save(existing);
                 itemRepository.save(newItem);
 
-                System.out.println("🤖 AI MATCH FOUND BETWEEN " +
+                System.out.println("🤖 MATCH FOUND BETWEEN " +
                         newItem.getId() + " (" + newItem.getTitle() + ") AND " + existing.getId() + " (" + existing.getTitle() + ")");
 
                 break;
             }
         }
+    }
+
+    private boolean hasKeywordMatch(Item item1, Item item2) {
+        String text1 = (item1.getTitle() + " " + item1.getDescription()).toLowerCase();
+        String text2 = (item2.getTitle() + " " + item2.getDescription()).toLowerCase();
+
+        // Common keywords to check
+        String[] keywords = {"iphone", "samsung", "wallet", "keys", "bag", "laptop", "watch", "phone", "charger", "headphones", "earbuds", "airpods"};
+
+        for (String keyword : keywords) {
+            if (text1.contains(keyword) && text2.contains(keyword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean hasCommonLabels(List<String> labels1, List<String> labels2) {
