@@ -18,8 +18,8 @@ public class ItemService {
     public Item save(Item item) {
         Item savedItem = itemRepository.save(item);
 
-        // Perform AI-assisted matching for newly created items
-        performAiMatching(savedItem);
+        // TODO: Re-enable AI matching after Vision API is properly configured
+        // performAiMatching(savedItem);
 
         return savedItem;
     }
