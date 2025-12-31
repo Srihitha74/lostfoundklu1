@@ -145,6 +145,7 @@ const AuthModal = ({ isOpen, onClose }) => {
       if (isLogin) {
         // Google Technology: Firebase Authentication - Login
         firebaseUser = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        console.log('Logged in user:', auth.currentUser);
       } else {
         // Register
         if (formData.password !== formData.confirmPassword) {
@@ -155,6 +156,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
         // Google Technology: Firebase Authentication - Register
         firebaseUser = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        console.log('Registered user:', auth.currentUser);
       }
 
       // After successful Firebase auth, send user data to backend
@@ -171,18 +173,17 @@ const AuthModal = ({ isOpen, onClose }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
+        // Backend call successful, but not storing JWT since using Firebase auth
 
         // Google Technology: Firebase Cloud Messaging - Get device token
         try {
           const fcmToken = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY });
           if (fcmToken) {
+            // Note: Without JWT, FCM update might need Firebase ID token
             await fetch(`${API_BASE}/api/auth/update-fcm-token`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${data.token}`,
               },
               body: JSON.stringify({ fcmToken }),
             });
@@ -193,13 +194,14 @@ const AuthModal = ({ isOpen, onClose }) => {
 
         setIsLoading(false);
         onClose();
-        navigate('/dashboard');
+        navigate('/feed');
       } else {
         const errorData = await response.json();
         setErrors({ general: errorData.message || 'Authentication failed' });
         setIsLoading(false);
       }
     } catch (error) {
+      console.error('Firebase Auth Error:', error.code, error.message);
       let errorMessage = 'Authentication failed';
       if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email';

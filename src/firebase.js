@@ -1,7 +1,7 @@
 // Firebase configuration and initialization
 // Google Technology: Firebase SDK for Authentication and Cloud Messaging
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -24,6 +24,7 @@ if (isFirebaseConfigured) {
   // Initialize Firebase only if properly configured
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence);
   messaging = getMessaging(app);
 } else {
   // Export null/undefined for Firebase services when not configured
