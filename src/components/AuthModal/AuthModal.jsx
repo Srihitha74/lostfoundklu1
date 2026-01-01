@@ -179,7 +179,7 @@ const AuthModal = ({ isOpen, onClose }) => {
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
             const fcmToken = await getToken(messaging, {
-              vapidKey: 'BYourVAPIDKeyHere' // TODO: Replace with actual VAPID key from Firebase
+              vapidKey: 'BNU5zQ10c6gSQYOiRofYD-MSxF8KZ4e8dZdphGQTYUQRl9TJdJPkItOFcSpglfvzy2lv2894670i8sy6qeaakdk'
             });
             if (fcmToken) {
               // Note: Without JWT, FCM update might need Firebase ID token
