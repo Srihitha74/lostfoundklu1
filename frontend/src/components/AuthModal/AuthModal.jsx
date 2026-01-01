@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { IoClose, IoEye, IoEyeOff } from 'react-icons/io5';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getToken } from 'firebase/messaging';
+import { getMessaging } from 'firebase/messaging';
 import { auth, messaging } from '../../firebase'; // Google Technology: Firebase Authentication and Cloud Messaging
 import './AuthModal.css';
 
@@ -68,9 +69,8 @@ const AuthModal = ({ isOpen, onClose }) => {
     setIsLoading(true);
     setErrors({});
 
-    // Check if Firebase is properly configured (not placeholder values)
-    const isFirebaseConfigured = import.meta.env.VITE_FIREBASE_API_KEY &&
-                                 !import.meta.env.VITE_FIREBASE_API_KEY.includes('your_');
+    // Firebase is now configured with actual values
+    const isFirebaseConfigured = true;
 
     if (!isFirebaseConfigured) {
       // Fallback to original JWT authentication
@@ -173,18 +173,26 @@ const AuthModal = ({ isOpen, onClose }) => {
         const data = await response.json();
         localStorage.setItem('token', data.token);
 
-        // Google Technology: Firebase Cloud Messaging - Get device token
+        // Google Technology: Firebase Cloud Messaging - Request permission and get device token
         try {
-          const fcmToken = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY });
-          if (fcmToken) {
-            await fetch(`${API_BASE}/api/auth/update-fcm-token`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${data.token}`,
-              },
-              body: JSON.stringify({ fcmToken }),
+          // Request notification permission
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const fcmToken = await getToken(messaging, {
+              vapidKey: 'BNU5zQ10c6gSQYOiRofYD-MSxF8KZ4e8dZdphGQTYUQRl9TJdJPkItOFcSpglfvzy2lv2894670i8sy6qeaakdk'
             });
+            if (fcmToken) {
+              await fetch(`${API_BASE}/api/auth/update-fcm-token`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${data.token}`,
+                },
+                body: JSON.stringify({ fcmToken }),
+              });
+            }
+          } else {
+            console.log('Notification permission denied');
           }
         } catch (fcmError) {
           console.error('Error getting FCM token:', fcmError);
