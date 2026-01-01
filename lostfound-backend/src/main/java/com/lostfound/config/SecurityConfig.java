@@ -24,7 +24,7 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${cors.allowed-origins:http://localhost:5173}")
+    @Value("${cors.allowed-origins:http://localhost:5173,https://lostfoundklu1-7.onrender.com}")
     private String allowedOrigins;
 
     @Autowired

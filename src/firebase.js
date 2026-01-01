@@ -5,18 +5,16 @@ import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth'
 import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyA5-s4mE-MotmVKvLweWW7x_8_x3Cz-ycE",
+  authDomain: "lost-and-found-3daca.firebaseapp.com",
+  projectId: "lost-and-found-3daca",
+  storageBucket: "lost-and-found-3daca.firebasestorage.app",
+  messagingSenderId: "355092040138",
+  appId: "1:355092040138:web:375f4a195e997c1fc2a733"
 };
 
-// Check if Firebase is properly configured
-const isFirebaseConfigured = firebaseConfig.apiKey &&
-                            !firebaseConfig.apiKey.includes('your_') &&
-                            firebaseConfig.apiKey.length > 10;
+// Firebase is now configured with actual values
+const isFirebaseConfigured = true;
 
 let app, auth, messaging;
 
