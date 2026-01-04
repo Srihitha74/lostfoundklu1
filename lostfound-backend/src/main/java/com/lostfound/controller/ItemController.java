@@ -8,8 +8,6 @@ import com.lostfound.service.ItemService;
 import com.lostfound.service.VisionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.MediaType;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,18 +46,6 @@ public class ItemController {
             .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{id}/image")
-    public ResponseEntity<byte[]> getItemImage(@PathVariable Long id) {
-        Item item = itemService.findById(id).orElseThrow(() -> new RuntimeException("Item not found"));
-        if (item.getImageData() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(item.getContentType()))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + item.getFilename() + "\"")
-            .body(item.getImageData());
-    }
-
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<Item> createItem(
             @RequestParam("title") String title,
@@ -90,16 +76,15 @@ public class ItemController {
 
         // Handle image upload
         if (image != null && !image.isEmpty()) {
-            item.setImageData(image.getBytes());
-            item.setContentType(image.getContentType());
-            item.setFilename(image.getOriginalFilename());
-
-            // Save temp file for Vision API
-            String tempFileName = "temp_" + UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-            Path tempPath = Paths.get("temp").resolve(tempFileName);
-            Files.createDirectories(tempPath.getParent());
-            Files.copy(image.getInputStream(), tempPath, StandardCopyOption.REPLACE_EXISTING);
-            imagePath = tempPath.toString();
+            String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+            Path uploadPath = Paths.get("uploads/images/");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            item.setImageUrl("/uploads/images/" + fileName);
+            imagePath = filePath.toString();
 
             // Google AI Tool: Use Vision API to auto-detect category if not provided
             if (finalCategory == null || finalCategory.trim().isEmpty()) {
@@ -109,9 +94,6 @@ public class ItemController {
             // Google AI Tool: Extract AI labels for matching
             List<String> aiLabels = visionService.analyzeImageAndExtractLabels(imagePath);
             item.setAiLabels(aiLabels);
-
-            // Clean up temp file
-            Files.deleteIfExists(tempPath);
         }
 
         // Set category, default to "Unknown" if still not set
@@ -158,7 +140,7 @@ public class ItemController {
 
         // Save temp image
         String tempFileName = "temp_" + UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-        Path tempPath = Paths.get("temp").resolve(tempFileName);
+        Path tempPath = Paths.get("uploads/images/").resolve(tempFileName);
         Files.createDirectories(tempPath.getParent());
         Files.copy(image.getInputStream(), tempPath, StandardCopyOption.REPLACE_EXISTING);
 

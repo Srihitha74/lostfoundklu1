@@ -23,12 +23,8 @@ public class Item {
 
     private LocalDateTime date;
 
-    @Lob
-    private byte[] imageData;
-
-    private String contentType;
-
-    private String filename;
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
 
     private String description;
 
@@ -97,28 +93,12 @@ public class Item {
         this.date = date;
     }
 
-    public byte[] getImageData() {
-        return imageData;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImageData(byte[] imageData) {
-        this.imageData = imageData;
-    }
-
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    public String getFilename() {
-        return filename;
-    }
-
-    public void setFilename(String filename) {
-        this.filename = filename;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getDescription() {
