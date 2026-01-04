@@ -21,6 +21,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
   
   const navigate = useNavigate();
 
@@ -68,6 +69,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
+    setSuccessMessage('');
 
     // Firebase is now configured with actual values
     const isFirebaseConfigured = true;
@@ -121,10 +123,9 @@ const AuthModal = ({ isOpen, onClose }) => {
 
           if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('token', data.token);
+            setSuccessMessage('Registration completed successfully! Now please login.');
             setIsLoading(false);
-            onClose();
-            navigate('/dashboard');
+            // Do not set token, close, or navigate
           } else {
             const errorData = await response.json();
             setErrors({ general: errorData.message || 'Registration failed' });
@@ -171,36 +172,9 @@ const AuthModal = ({ isOpen, onClose }) => {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('token', data.token);
-
-        // Google Technology: Firebase Cloud Messaging - Request permission and get device token
-        try {
-          // Request notification permission
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            const fcmToken = await getToken(messaging, {
-              vapidKey: 'BNU5zQ10c6gSQYOiRofYD-MSxF8KZ4e8dZdphGQTYUQRl9TJdJPkItOFcSpglfvzy2lv2894670i8sy6qeaakdk'
-            });
-            if (fcmToken) {
-              await fetch(`${API_BASE}/api/auth/update-fcm-token`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${data.token}`,
-                },
-                body: JSON.stringify({ fcmToken }),
-              });
-            }
-          } else {
-            console.log('Notification permission denied');
-          }
-        } catch (fcmError) {
-          console.error('Error getting FCM token:', fcmError);
-        }
-
+        setSuccessMessage('Registration completed successfully! Now please login.');
         setIsLoading(false);
-        onClose();
-        navigate('/dashboard');
+        // Do not set token, close, or navigate
       } else {
         const errorData = await response.json();
         setErrors({ general: errorData.message || 'Authentication failed' });
@@ -356,6 +330,8 @@ const AuthModal = ({ isOpen, onClose }) => {
                 )}
 
                 {errors.general && <div className="error-text general-error">{errors.general}</div>}
+
+                {successMessage && !isLogin && <div className="success-text">{successMessage}</div>}
 
                 <motion.button
                   type="submit"
