@@ -72,7 +72,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     setSuccessMessage('');
 
     // Firebase is now configured with actual values
-    const isFirebaseConfigured = true;
+    const isFirebaseConfigured = false;
 
     if (!isFirebaseConfigured) {
       // Fallback to original JWT authentication
