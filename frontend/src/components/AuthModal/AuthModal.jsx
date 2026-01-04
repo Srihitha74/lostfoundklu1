@@ -333,7 +333,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
                 {errors.general && <div className="error-text general-error">{errors.general}</div>}
 
-                {successMessage && <div className="success-text">{successMessage}</div>}
+                {successMessage && !isLogin && <div className="success-text">{successMessage}</div>}
 
                 <motion.button
                   type="submit"
