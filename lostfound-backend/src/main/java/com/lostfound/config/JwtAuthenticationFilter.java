@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -30,11 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    // Only skip PUBLIC auth endpoints, not authenticated ones
+    // Only skip PUBLIC auth endpoints
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        // Only skip public endpoints, profile needs authentication
         return path.startsWith("/api/auth/register") || 
                path.startsWith("/api/auth/login") || 
                path.startsWith("/api/auth/firebase-login") ||
@@ -52,33 +52,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = getJwtFromRequest(request);
 
         if (jwt != null) {
+            logger.info("JWT token received for validation");
             try {
                 if (jwtUtils.validateJwtToken(jwt)) {
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
+                    logger.info("JWT token is valid for user: {}", username);
                     
-                    logger.debug("JWT token is valid for user: {}", username);
+                    try {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                        logger.info("User details loaded successfully: {}", username);
+                        
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
 
-                    UserDetails userDetails =
-                            userDetailsService.loadUserByUsername(username);
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
+                        );
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
-
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    logger.debug("Authentication set for user: {}", username);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        logger.info("Authentication set successfully for user: {}", username);
+                    } catch (UsernameNotFoundException e) {
+                        logger.error("User not found in database: {}", username);
+                    }
                 } else {
-                    logger.warn("JWT token validation failed");
+                    logger.warn("JWT token validation FAILED");
                 }
             } catch (Exception e) {
-                logger.error("Cannot set user authentication: {}", e.getMessage());
+                logger.error("Exception during JWT validation: {}", e.getMessage(), e);
             }
         } else {
             logger.debug("No JWT token found in request header");
