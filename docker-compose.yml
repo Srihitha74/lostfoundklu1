@@ -5,7 +5,7 @@ services:
     image: mysql:8.0
     container_name: lostfound-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: Sri@
+      MYSQL_ROOT_PASSWORD: Sri@513947
       MYSQL_DATABASE: lostfound
       MYSQL_USER: lostfound_user
       MYSQL_PASSWORD: lostfound_password

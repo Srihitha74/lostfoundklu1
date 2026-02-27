@@ -127,6 +127,17 @@ const handleAIFill = (aiData) => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
+      
+      // Debug: Check if token exists
+      if (!token) {
+        alert('You are not logged in. Please login first.');
+        setIsSubmitting(false);
+        navigate('/');
+        return;
+      }
+      
+      console.log('Submitting with token:', token.substring(0, 20) + '...');
+      
       if (!formData.date) {
         alert('Please select a date and time.');
         setIsSubmitting(false);
@@ -159,13 +170,15 @@ const handleAIFill = (aiData) => {
           'Content-Type': 'multipart/form-data'
         }
       });
-
+      
+      console.log('Report submitted successfully');
       setShowSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
     } catch (error) {
       console.error('Error submitting report:', error);
+      console.error('Error response:', error.response);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to submit report. Please try again.';
       alert(errorMessage);
     } finally {
