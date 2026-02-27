@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,7 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    // Only skip PUBLIC auth endpoints
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
@@ -49,18 +50,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        String path = request.getServletPath();
+        logger.info("Processing request: {} {}", request.getMethod(), path);
+
         String jwt = getJwtFromRequest(request);
 
         if (jwt != null) {
-            logger.info("JWT token received for validation");
+            logger.info("JWT token present, validating...");
             try {
-                if (jwtUtils.validateJwtToken(jwt)) {
+                boolean isValid = jwtUtils.validateJwtToken(jwt);
+                logger.info("JWT validation result: {}", isValid);
+                
+                if (isValid) {
                     String username = jwtUtils.getUserNameFromJwtToken(jwt);
-                    logger.info("JWT token is valid for user: {}", username);
+                    logger.info("Username from JWT: {}", username);
                     
                     try {
                         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        logger.info("User details loaded successfully: {}", username);
+                        logger.info("User loaded: {}, authorities: {}", username, userDetails.getAuthorities());
                         
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
@@ -74,18 +81,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        logger.info("Authentication set successfully for user: {}", username);
+                        logger.info("Authentication SET for user: {}", username);
                     } catch (UsernameNotFoundException e) {
-                        logger.error("User not found in database: {}", username);
+                        logger.error("User NOT FOUND in database: {}", username, e);
                     }
                 } else {
-                    logger.warn("JWT token validation FAILED");
+                    logger.warn("JWT token is INVALID");
                 }
             } catch (Exception e) {
-                logger.error("Exception during JWT validation: {}", e.getMessage(), e);
+                logger.error("Exception during JWT processing: {} - {}", e.getClass().getName(), e.getMessage(), e);
             }
         } else {
-            logger.debug("No JWT token found in request header");
+            logger.warn("No JWT token in request for path: {}", path);
         }
 
         filterChain.doFilter(request, response);
@@ -94,7 +101,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getJwtFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            return header.substring(7);
+            String token = header.substring(7);
+            logger.info("Extracted token (first 20 chars): {}", token.substring(0, Math.min(20, token.length())));
+            return token;
         }
         return null;
     }
