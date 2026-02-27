@@ -2,18 +2,23 @@ version: "3.8"
 
 services:
   db:
-    image: postgres:15
-    container_name: lostfound-postgres
+    image: mysql:8.0
+    container_name: lostfound-mysql
     environment:
-      POSTGRES_DB: lostfound_db_9acj
-      POSTGRES_USER: lostfound_db_9acj_user
-      POSTGRES_PASSWORD: 1BiS1h7IyQYSa25HeNNLNhHRd4yKM9Ch
+      MYSQL_ROOT_PASSWORD: Sri@
+      MYSQL_DATABASE: lostfound
+      MYSQL_USER: lostfound_user
+      MYSQL_PASSWORD: lostfound_password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   backend:
     build:
@@ -23,13 +28,15 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/lostfound_db_9acj
-      SPRING_DATASOURCE_USERNAME: lostfound_db_9acj_user
-      SPRING_DATASOURCE_PASSWORD: 1BiS1h7IyQYSa25HeNNLNhHRd4yKM9Ch
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/lostfound?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: lostfound_user
+      SPRING_DATASOURCE_PASSWORD: lostfound_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
     volumes:
       - uploads_data:/app/uploads
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -39,7 +46,7 @@ services:
       dockerfile: Dockerfile
     container_name: lostfound-frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
       VITE_BACKEND_URL: http://backend:8080
     depends_on:
@@ -52,5 +59,5 @@ networks:
     driver: bridge
 
 volumes:
-  pg_data:
+  mysql_data:
   uploads_data:
