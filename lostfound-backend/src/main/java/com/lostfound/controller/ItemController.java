@@ -1,8 +1,10 @@
 package com.lostfound.controller;
 
 import com.lostfound.model.Item;
+import com.lostfound.model.ItemImage;
 import com.lostfound.model.Status;
 import com.lostfound.model.User;
+import com.lostfound.repository.ItemImageRepository;
 import com.lostfound.repository.UserRepository;
 import com.lostfound.service.ItemService;
 import com.lostfound.service.VisionService;
@@ -16,9 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/items")
@@ -33,6 +35,8 @@ public class ItemController {
     @Autowired
     private VisionService visionService;
 
+    @Autowired
+    private ItemImageRepository itemImageRepository;
 
     @GetMapping
     public ResponseEntity<List<Item>> getAllItems() {
@@ -47,7 +51,7 @@ public class ItemController {
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<Item> createItem(
+    public ResponseEntity<?> createItem(
             @RequestParam("title") String title,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam("status") String status,
@@ -55,7 +59,7 @@ public class ItemController {
             @RequestParam("date") String date,
             @RequestParam("description") String description,
             @RequestParam("contactInfo") String contactInfo,
-            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "images", required = false) MultipartFile[] images,
             Authentication authentication) throws IOException {
 
         // Set user from authentication
@@ -66,41 +70,112 @@ public class ItemController {
         item.setTitle(title);
         item.setStatus(Status.valueOf(status.toUpperCase()));
         item.setLocation(location);
-        item.setDate(java.time.LocalDateTime.parse(date.substring(0, 19))); // Parse ISO string
+        item.setDate(java.time.LocalDateTime.parse(date.substring(0, 19)));
         item.setDescription(description);
         item.setContactInfo(contactInfo);
         item.setUser(user);
 
         String finalCategory = category;
-        String imagePath = null;
+        String primaryImagePath = null;
+        List<String> allImagePaths = new ArrayList<>();
 
-        // Handle image upload
-        if (image != null && !image.isEmpty()) {
-            String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-            Path uploadPath = Paths.get("uploads/images/");
+        // Handle multiple image uploads
+        if (images != null && images.length > 0) {
+            String uploadDir = "uploads/images/";
+            Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            item.setImageUrl("/uploads/images/" + fileName);
-            imagePath = filePath.toString();
 
-            // Google AI Tool: Use Vision API to auto-detect category if not provided
-            if (finalCategory == null || finalCategory.trim().isEmpty()) {
-                finalCategory = visionService.analyzeImageAndDetectCategory(imagePath);
+            List<ItemImage> itemImages = new ArrayList<>();
+            
+            for (int i = 0; i < images.length; i++) {
+                MultipartFile image = images[i];
+                if (image != null && !image.isEmpty()) {
+                    String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+                    Path filePath = uploadPath.resolve(fileName);
+                    Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                    
+                    String imageUrl = "/uploads/images/" + fileName;
+                    allImagePaths.add(filePath.toString());
+                    
+                    // First image is primary
+                    boolean isPrimary = (i == 0);
+                    
+                    // Save image entity
+                    ItemImage itemImage = new ItemImage(item, imageUrl, isPrimary, i);
+                    itemImages.add(itemImage);
+                    
+                    if (isPrimary) {
+                        item.setImageUrl(imageUrl);
+                        primaryImagePath = filePath.toString();
+                    }
+                }
             }
+            
+            item.setImages(itemImages);
+        }
 
-            // Google AI Tool: Extract AI labels for matching
-            List<String> aiLabels = visionService.analyzeImageAndExtractLabels(imagePath);
+        // Google AI Tool: Use Vision API to auto-detect category from first image if not provided
+        if ((finalCategory == null || finalCategory.trim().isEmpty()) && !allImagePaths.isEmpty()) {
+            VisionService.EnhancedAnalysisResult aiResult = visionService.analyzeImageEnhanced(allImagePaths.get(0));
+            finalCategory = aiResult.getCategory();
+            
+            // Save AI detection results
+            item.setAiDetectedCategory(aiResult.getCategory());
+            item.setAiConfidenceScore(aiResult.getConfidenceScore());
+            item.setAiDetectedColors(aiResult.getDetectedColors());
+            item.setAiDetectedBrands(aiResult.getDetectedBrands());
+        }
+
+        // Set category, default to "Other" if still not set
+        item.setCategory(finalCategory != null && !finalCategory.trim().isEmpty() ? finalCategory : "Other");
+
+        // Google AI Tool: Extract AI labels for matching (from first image)
+        if (!allImagePaths.isEmpty()) {
+            List<String> aiLabels = visionService.analyzeImageAndExtractLabels(allImagePaths.get(0));
             item.setAiLabels(aiLabels);
         }
 
-        // Set category, default to "Unknown" if still not set
-        item.setCategory(finalCategory != null && !finalCategory.trim().isEmpty() ? finalCategory : "Unknown");
-
         Item savedItem = itemService.save(item);
         return ResponseEntity.ok(savedItem);
+    }
+
+    /**
+     * Phase 1: New endpoint for AI image analysis
+     * Returns detailed analysis: category, colors, brands, confidence score, labels
+     */
+    @PostMapping("/analyze-image")
+    public ResponseEntity<VisionService.EnhancedAnalysisResult> analyzeImage(
+            @RequestParam("image") MultipartFile image) throws IOException {
+        
+        if (image == null || image.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Save temp image
+        String tempFileName = "temp_analysis_" + UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+        Path tempPath = Paths.get("uploads/images/").resolve(tempFileName);
+        Files.createDirectories(tempPath.getParent());
+        Files.copy(image.getInputStream(), tempPath, StandardCopyOption.REPLACE_EXISTING);
+
+        try {
+            // Analyze image with enhanced Vision API
+            VisionService.EnhancedAnalysisResult result = visionService.analyzeImageEnhanced(tempPath.toString());
+            return ResponseEntity.ok(result);
+        } finally {
+            // Clean up temp file
+            Files.deleteIfExists(tempPath);
+        }
+    }
+
+    /**
+     * Phase 1: Get all images for an item
+     */
+    @GetMapping("/{id}/images")
+    public ResponseEntity<List<ItemImage>> getItemImages(@PathVariable Long id) {
+        List<ItemImage> images = itemImageRepository.findByItemIdOrderByUploadOrderAsc(id);
+        return ResponseEntity.ok(images);
     }
 
     @GetMapping("/user/{userId}")
@@ -124,7 +199,7 @@ public class ItemController {
 
         // Check if the user owns the item
         if (!item.getUser().getId().equals(user.getId())) {
-            return ResponseEntity.status(403).build(); // Forbidden
+            return ResponseEntity.status(403).build();
         }
 
         itemService.deleteById(id);
@@ -133,21 +208,17 @@ public class ItemController {
 
     @PostMapping("/suggest-category")
     public ResponseEntity<String> suggestCategory(@RequestParam("image") MultipartFile image) throws IOException {
-        // Google AI Tool: Provide category suggestion based on image analysis
         if (image == null || image.isEmpty()) {
             return ResponseEntity.badRequest().body("Image is required");
         }
 
-        // Save temp image
         String tempFileName = "temp_" + UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
         Path tempPath = Paths.get("uploads/images/").resolve(tempFileName);
         Files.createDirectories(tempPath.getParent());
         Files.copy(image.getInputStream(), tempPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Analyze image
         String suggestedCategory = visionService.analyzeImageAndDetectCategory(tempPath.toString());
 
-        // Clean up temp file
         Files.deleteIfExists(tempPath);
 
         return ResponseEntity.ok(suggestedCategory);

@@ -1,142 +1,619 @@
+/* HeroLanding.css - Spotify + Swiggy Style */
+
+:root {
+  --spotify-green: #1DB954;
+  --spotify-green-hover: #1ED760;
+  --swiggy-orange: #FF5200;
+  --swiggy-orange-light: #FF6D3A;
+  --dark-bg: #121212;
+  --text-light: #ffffff;
+  --text-secondary: #b3b3b3;
+  --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.7);
+  --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 5px 15px rgba(0, 0, 0, 0.3);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Styles */
 .hero-landing {
+  position: relative;
   min-height: 100vh;
+  width: 100vw;
+  margin-left: 0;
+  padding-left: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
+  padding: 2rem;
+  background: linear-gradient(135deg, #0a0a0a 0%, #121212 50%, #1a1a1a 100%);
 }
 
+/* Animated Background - Spotify/Swiggy Style */
 .hero-background {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(34, 197, 94, 0.1) 0%, 
-    rgba(59, 130, 246, 0.1) 50%, 
-    rgba(249, 115, 22, 0.1) 100%);
-  z-index: -1;
-}
-
-.hero-background::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.2) 0%, transparent 50%);
-  animation: float 20s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
-  50% {
-    transform: translate(-50%, -50%) rotate(180deg);
-  }
-}
-
-.hero-content {
-  text-align: center;
-  max-width: 800px;
-  padding: 0 20px;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(29, 185, 84, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 82, 0, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(29, 185, 84, 0.08) 0%, transparent 50%);
+  animation: backgroundPulse 15s ease-in-out infinite alternate;
   z-index: 1;
 }
 
+@keyframes backgroundPulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+/* Content Container */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  width: 100%;
+  text-align: center;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  background: rgba(18, 18, 18, 0.7);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    var(--shadow-heavy),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Hero Text */
+.hero-text {
+  width: 100%;
+  max-width: 800px;
+}
+
 .hero-title {
-  font-size: clamp(3rem, 8vw, 5rem);
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, var(--primary-green), var(--accent-blue));
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: inline-block;
+}
+
+/* Animated Gradient Title - Spotify Green to Swiggy Orange */
+.hero-title {
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #ffffff 20%,
+    var(--spotify-green) 40%,
+    var(--swiggy-orange) 60%,
+    var(--swiggy-orange) 80%,
+    var(--spotify-green) 100%
+  );
+  background-size: 400% 400%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: titleShimmer 6s ease-in-out infinite alternate;
+  text-shadow: 
+    0 4px 20px rgba(29, 185, 84, 0.3),
+    0 0 40px rgba(255, 82, 0, 0.2);
+}
+
+@keyframes titleShimmer {
+  0% {
+    background-position: 0% 50%;
+    text-shadow: 
+      0 4px 20px rgba(29, 185, 84, 0.3),
+      0 0 40px rgba(255, 82, 0, 0.2);
+  }
+  50% {
+    background-position: 100% 50%;
+    text-shadow: 
+      0 4px 30px rgba(255, 82, 0, 0.4),
+      0 0 60px rgba(29, 185, 84, 0.3);
+  }
+  100% {
+    background-position: 0% 50%;
+    text-shadow: 
+      0 4px 20px rgba(29, 185, 84, 0.3),
+      0 0 40px rgba(255, 82, 0, 0.2);
+  }
 }
 
 .hero-subtitle {
-  font-size: clamp(1.1rem, 2.5vw, 1.3rem);
-  color: var(--text-gray);
-  margin-bottom: 3rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.8;
+  font-size: 1.3rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 auto;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.hero-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-.hero-btn {
-  font-size: 1.1rem;
-  padding: 16px 32px;
-  min-width: 180px;
-  border-radius: 16px;
+/* Story Animation CSS - CENTERED */
+.story-animation {
   position: relative;
+  width: 100%;
+  max-width: 700px;
+  height: 250px;
+  margin: 1rem auto;
   overflow: hidden;
+  background: linear-gradient(180deg, 
+    rgba(24, 24, 24, 0.95) 0%,
+    rgba(18, 18, 18, 0.95) 50%,
+    rgba(12, 12, 12, 0.95) 100%);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(29, 185, 84, 0.2);
+  z-index: 3;
 }
 
-.hero-btn::before {
-  content: '';
+/* Scene Container */
+.scene {
   position: absolute;
-  top: 0;
-  left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.hero-btn:hover::before {
-  left: 100%;
+/* Ground */
+.ground {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 70px;
+  background: linear-gradient(0deg, 
+    #1a3a2a 0%,
+    #2a4a3a 100%);
+  z-index: 1;
 }
 
-.hero-login {
-  color: var(--text-gray);
-  font-size: 1rem;
+.ground::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(90deg, 
+    transparent 10%,
+    rgba(29, 185, 84, 0.2) 50%,
+    transparent 90%);
 }
 
-.login-link {
-  background: none;
-  border: none;
-  color: var(--accent-blue);
-  cursor: pointer;
-  font-weight: 500;
-  margin-left: 8px;
-  transition: all 0.3s ease;
-  text-decoration: underline;
+/* Walking Path */
+.path {
+  position: absolute;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 25px;
+  background: linear-gradient(90deg, 
+    #2a2a2a 0%,
+    #3a3a3a 50%,
+    #2a2a2a 100%);
+  border-radius: 12px;
+  z-index: 2;
+  box-shadow: 
+    0 5px 15px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.05);
 }
 
-.login-link:hover {
-  color: #2563eb;
-  transform: translateY(-1px);
+/* Girl Character */
+.girl {
+  position: absolute;
+  bottom: 60px;
+  left: -100px;
+  width: 50px;
+  height: 100px;
+  z-index: 10;
+  animation: girlWalk 8s ease-in-out infinite;
 }
 
-@media (max-width: 768px) {
-  .hero-buttons {
-    flex-direction: column;
-    align-items: center;
+.girl-body {
+  position: absolute;
+  width: 35px;
+  height: 70px;
+  background: linear-gradient(135deg, 
+    var(--spotify-green) 0%,
+    #158a3e 100%);
+  border-radius: 18px 18px 8px 8px;
+  transform-origin: bottom center;
+  animation: girlMove 1s ease-in-out infinite;
+}
+
+.girl-head {
+  position: absolute;
+  top: -25px;
+  left: 8px;
+  width: 25px;
+  height: 25px;
+  background: #ffdbac;
+  border-radius: 50%;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.1);
+}
+
+.girl-hair {
+  position: absolute;
+  top: -35px;
+  left: 3px;
+  width: 35px;
+  height: 18px;
+  background: #2a2a2a;
+  border-radius: 50% 50% 0 0;
+}
+
+.girl-arm-left,
+.girl-arm-right {
+  position: absolute;
+  top: 25px;
+  width: 18px;
+  height: 45px;
+  background: #ffdbac;
+  border-radius: 9px;
+}
+
+.girl-arm-left {
+  left: -13px;
+  transform-origin: top right;
+  animation: armSwingLeft 1s ease-in-out infinite;
+}
+
+.girl-arm-right {
+  right: -13px;
+  transform-origin: top left;
+  animation: armSwingRight 1s ease-in-out infinite;
+}
+
+/* Book Item */
+.book {
+  position: absolute;
+  bottom: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 25px;
+  height: 35px;
+  background: linear-gradient(135deg, 
+    var(--swiggy-orange) 0%,
+    var(--swiggy-orange-light) 100%);
+  border-radius: 4px;
+  z-index: 5;
+  opacity: 0;
+  animation: bookDrop 8s ease-in-out infinite;
+  box-shadow: 
+    0 5px 15px rgba(255, 82, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.book::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  background: linear-gradient(135deg, 
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 100%);
+  border-radius: 2px;
+}
+
+/* Boy Character */
+.boy {
+  position: absolute;
+  bottom: 60px;
+  right: -100px;
+  width: 50px;
+  height: 100px;
+  z-index: 10;
+  animation: boyWalk 8s ease-in-out infinite;
+}
+
+.boy-body {
+  position: absolute;
+  width: 35px;
+  height: 70px;
+  background: linear-gradient(135deg, 
+    var(--swiggy-orange) 0%,
+    #cc4400 100%);
+  border-radius: 18px 18px 8px 8px;
+  transform-origin: bottom center;
+  animation: boyMove 1s ease-in-out infinite;
+}
+
+.boy-head {
+  position: absolute;
+  top: -25px;
+  left: 8px;
+  width: 25px;
+  height: 25px;
+  background: #ffdbac;
+  border-radius: 50%;
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.1);
+}
+
+.boy-hair {
+  position: absolute;
+  top: -30px;
+  left: 3px;
+  width: 35px;
+  height: 15px;
+  background: #1a1a1a;
+  border-radius: 50% 50% 0 0;
+}
+
+.boy-arm-left,
+.boy-arm-right {
+  position: absolute;
+  top: 25px;
+  width: 18px;
+  height: 45px;
+  background: #ffdbac;
+  border-radius: 9px;
+}
+
+.boy-arm-left {
+  left: -13px;
+  transform-origin: top right;
+  animation: boyArmSwingLeft 1s ease-in-out infinite;
+}
+
+.boy-arm-right {
+  right: -13px;
+  transform-origin: top left;
+  animation: boyArmSwingRight 1s ease-in-out infinite;
+}
+
+/* Thought Bubbles */
+.thought-bubble {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0;
+  z-index: 20;
+}
+
+.thought-girl {
+  top: -40px;
+  left: 60px;
+  width: 35px;
+  height: 35px;
+  animation: thoughtGirl 8s ease-in-out infinite;
+}
+
+.thought-boy {
+  top: -40px;
+  right: 60px;
+  width: 35px;
+  height: 35px;
+  animation: thoughtBoy 8s ease-in-out infinite;
+}
+
+.thought-bubble::before {
+  content: '💡';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+}
+
+/* Heart Animation when boy finds book - Spotify Green */
+.heart {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 25px;
+  height: 25px;
+  background: var(--spotify-green);
+  opacity: 0;
+  z-index: 15;
+  animation: heartPulse 8s ease-in-out infinite;
+}
+
+.heart::before,
+.heart::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  background: var(--spotify-green);
+  border-radius: 50%;
+}
+
+.heart::before {
+  top: -12px;
+  left: 0;
+}
+
+.heart::after {
+  top: 0;
+  left: 12px;
+}
+
+/* KEYFRAMES ANIMATIONS */
+
+/* Girl walking */
+@keyframes girlWalk {
+  0% {
+    left: -100px;
   }
-  
-  .hero-btn {
-    width: 100%;
-    max-width: 280px;
+  40% {
+    left: 50%;
   }
-  
-  .hero-content {
-    padding: 0 16px;
+  50% {
+    left: 50%;
+  }
+  60% {
+    left: 50%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+/* Girl body movement */
+@keyframes girlMove {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Arm swinging */
+@keyframes armSwingLeft {
+  0%, 100% {
+    transform: rotate(-20deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
+}
+
+@keyframes armSwingRight {
+  0%, 100% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+
+/* Book drop animation */
+@keyframes bookDrop {
+  0%, 30% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-50px);
+  }
+  35% {
+    opacity: 1;
+  }
+  45%, 55% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  60%, 100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Boy walking */
+@keyframes boyWalk {
+  0%, 60% {
+    right: -100px;
+    left: auto;
+  }
+  70% {
+    right: 50%;
+    left: auto;
+  }
+  80%, 100% {
+    right: 150%;
+    left: auto;
+  }
+}
+
+@keyframes boyMove {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes boyArmSwingLeft {
+  0%, 100% {
+    transform: rotate(-20deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
+}
+
+@keyframes boyArmSwingRight {
+  0%, 100% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+
+/* Thought bubble animations */
+@keyframes thoughtGirl {
+  0%, 25% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  30%, 40% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  45%, 100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes thoughtBoy {
+  0%, 55% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  60%, 70% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  75%, 100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Heart pulse */
+@keyframes heartPulse {
+  0%, 70% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
+  }
+  75% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.2);
+  }
+  80% {
+    transform: translateX(-50%) scale(1);
+  }
+  85% {
+    transform: translateX(-50%) scale(1.1);
+  }
+  90%, 100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
   }
 }

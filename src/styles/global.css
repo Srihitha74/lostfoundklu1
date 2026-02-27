@@ -1,17 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  --primary-green: #22C55E;
-  --secondary-coral: #F97316;
-  --accent-blue: #3B82F6;
-  --bg-light: #F8FAFC;
-  --text-gray: #64748B;
-  --text-dark: #1E293B;
-  --white: #FFFFFF;
-  --shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* Spotify Dark Theme */
+  --spotify-black: #000000;
+  --spotify-dark: #121212;
+  --spotify-card: #181818;
+  --spotify-elevated: #282828;
+  --spotify-hover: #3E3E3E;
+  --spotify-light: #B3B3B3;
+  --spotify-white: #FFFFFF;
+  --spotify-green: #1DB954;
+  --spotify-green-hover: #1ED760;
+  
+  /* Swiggy Orange */
+  --swiggy-orange: #FF5200;
+  --swiggy-orange-light: #FF6D3A;
+  --swiggy-orange-dark: #E54800;
+  
+  /* Combined Palette */
+  --primary: #1DB954;
+  --primary-hover: #1ED760;
+  --accent: #FF5200;
+  --accent-hover: #FF6D3A;
+  
+  /* Surfaces */
+  --bg-dark: #121212;
+  --bg-card: #181818;
+  --bg-elevated: #282828;
+  --bg-hover: #3E3E3E;
+  
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B3B3B3;
+  --text-muted: #727272;
+  
+  /* Shadows */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 16px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow-green: 0 0 20px rgba(29, 185, 84, 0.4);
+  --shadow-glow-orange: 0 0 20px rgba(255, 82, 0, 0.4);
 }
 
 * {
@@ -22,175 +49,221 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--bg-light);
-  color: var(--text-dark);
+  background-color: var(--spotify-dark);
+  color: var(--text-primary);
   line-height: 1.6;
+  min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
   line-height: 1.2;
+  color: var(--text-primary);
 }
 
+/* Spotify-style Buttons */
 .btn {
   padding: 12px 24px;
   border: none;
-  border-radius: 12px;
+  border-radius: 500px;
   font-family: 'Inter', sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   text-decoration: none;
   position: relative;
   overflow: hidden;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .btn-primary {
-  background: var(--primary-green);
-  color: white;
-  box-shadow: var(--shadow-medium);
+  background: var(--spotify-green);
+  color: var(--spotify-black);
+  box-shadow: var(--shadow-glow-green);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-large);
-  background: #16a34a;
+  transform: scale(1.04);
+  background: var(--spotify-green-hover);
+  box-shadow: 0 0 30px rgba(29, 185, 84, 0.6);
 }
 
 .btn-secondary {
-  background: var(--secondary-coral);
+  background: var(--swiggy-orange);
   color: white;
-  box-shadow: var(--shadow-medium);
+  box-shadow: var(--shadow-glow-orange);
 }
 
 .btn-secondary:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-large);
-  background: #ea580c;
+  transform: scale(1.04);
+  background: var(--swiggy-orange-light);
+  box-shadow: 0 0 30px rgba(255, 82, 0, 0.6);
 }
 
 .btn-accent {
-  background: var(--accent-blue);
-  color: white;
-  box-shadow: var(--shadow-medium);
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--spotify-light);
 }
 
 .btn-accent:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-large);
-  background: #2563eb;
+  background: var(--spotify-hover);
+  border-color: var(--text-primary);
 }
 
 .btn:active {
-  transform: translateY(-2px) scale(0.98);
+  transform: scale(0.98);
 }
 
+/* Spotify-style Cards */
 .card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: var(--shadow-light);
-  transition: all 0.3s ease;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 16px;
+  transition: background 0.3s ease;
+  cursor: pointer;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  background: var(--bg-elevated);
 }
 
+/* Swiggy-style Cards (more rounded) */
+.card-swiggy {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+.card-swiggy:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+  background: var(--bg-elevated);
+}
+
+/* Input Fields */
+.input {
+  background: var(--spotify-hover);
+  border: none;
+  border-radius: 4px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  background: var(--spotify-elevated);
+  box-shadow: 0 0 0 2px var(--spotify-green);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Gradient Backgrounds */
+.gradient-spotify {
+  background: linear-gradient(180deg, #2E2E2E 0%, var(--spotify-dark) 100%);
+}
+
+.gradient-swiggy {
+  background: linear-gradient(180deg, var(--swiggy-orange) 0%, var(--swiggy-orange-dark) 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+/* Animations */
 .shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-@keyframes bounce {
-  0%, 20%, 53%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40%, 43% {
-    transform: translateY(-30px);
-  }
-  70% {
-    transform: translateY(-15px);
-  }
-  90% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes shake {
+@keyframes pulse-glow {
   0%, 100% {
-    transform: translateX(0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-10px);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translateX(10px);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.4);
   }
   50% {
-    opacity: 0.5;
+    box-shadow: 0 0 40px rgba(29, 185, 84, 0.8);
   }
 }
 
-@keyframes typing {
-  0%, 20% {
-    transform: translateY(0);
-  }
-  33% {
-    transform: translateY(-10px);
-  }
-  66% {
-    transform: translateY(0);
-  }
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
 }
 
-.animate-bounce {
-  animation: bounce 2s infinite;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.animate-shake {
-  animation: shake 0.5s ease-in-out;
+::-webkit-scrollbar-track {
+  background: var(--spotify-dark);
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+::-webkit-scrollbar-thumb {
+  background: var(--spotify-hover);
+  border-radius: 4px;
 }
 
-.typing-dot {
-  animation: typing 1.4s infinite ease-in-out;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--spotify-light);
 }
 
-.typing-dot:nth-child(1) { animation-delay: -0.32s; }
-.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+/* Status Badges */
+.badge {
+  padding: 4px 12px;
+  border-radius: 500px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
+.badge-lost {
+  background: rgba(255, 82, 0, 0.2);
+  color: var(--swiggy-orange);
+}
+
+.badge-found {
+  background: rgba(29, 185, 84, 0.2);
+  color: var(--spotify-green);
+}
+
+/* Glass Effect */
+.glass {
+  background: rgba(24, 24, 24, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .btn {
     padding: 10px 20px;
-    font-size: 14px;
+    font-size: 13px;
   }
   
-  .card {
+  .card, .card-swiggy {
     padding: 16px;
   }
 }

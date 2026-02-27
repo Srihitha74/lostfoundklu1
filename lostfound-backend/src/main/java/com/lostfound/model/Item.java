@@ -3,6 +3,7 @@ package com.lostfound.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "items")
@@ -43,6 +44,24 @@ public class Item {
     private boolean aiMatched;
 
     private Long matchedItemId;
+
+    // Phase 1: Multiple Images Support
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("uploadOrder ASC")
+    private List<ItemImage> images = new ArrayList<>();
+
+    // Phase 1: AI Detection Fields
+    @Column(name = "ai_detected_category")
+    private String aiDetectedCategory;
+
+    @Column(name = "ai_confidence_score")
+    private Double aiConfidenceScore;
+
+    @Column(name = "ai_detected_colors", length = 255)
+    private String aiDetectedColors;
+
+    @Column(name = "ai_detected_brands", length = 255)
+    private String aiDetectedBrands;
 
     // Getters and Setters
     public Long getId() {
@@ -147,5 +166,65 @@ public class Item {
 
     public void setMatchedItemId(Long matchedItemId) {
         this.matchedItemId = matchedItemId;
+    }
+
+    // Phase 1: Multiple Images Helper Methods
+    public List<ItemImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ItemImage> images) {
+        this.images = images;
+    }
+
+    public void addImage(ItemImage image) {
+        images.add(image);
+        image.setItem(this);
+    }
+
+    public void removeImage(ItemImage image) {
+        images.remove(image);
+        image.setItem(null);
+    }
+
+    // Phase 1: AI Detection Getters and Setters
+    public String getAiDetectedCategory() {
+        return aiDetectedCategory;
+    }
+
+    public void setAiDetectedCategory(String aiDetectedCategory) {
+        this.aiDetectedCategory = aiDetectedCategory;
+    }
+
+    public Double getAiConfidenceScore() {
+        return aiConfidenceScore;
+    }
+
+    public void setAiConfidenceScore(Double aiConfidenceScore) {
+        this.aiConfidenceScore = aiConfidenceScore;
+    }
+
+    public String getAiDetectedColors() {
+        return aiDetectedColors;
+    }
+
+    public void setAiDetectedColors(String aiDetectedColors) {
+        this.aiDetectedColors = aiDetectedColors;
+    }
+
+    public String getAiDetectedBrands() {
+        return aiDetectedBrands;
+    }
+
+    public void setAiDetectedBrands(String aiDetectedBrands) {
+        this.aiDetectedBrands = aiDetectedBrands;
+    }
+
+    // Get primary image URL for backward compatibility
+    public String getPrimaryImageUrl() {
+        if (images != null && !images.isEmpty()) {
+            return images.get(0).getImageUrl();
+        }
+        return imageUrl;
     }
 }

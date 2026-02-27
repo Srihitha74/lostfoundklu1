@@ -26,11 +26,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    // 🔥 CRITICAL FIX
+    // 🔥 CRITICAL FIX - Only skip PUBLIC auth endpoints, not authenticated ones
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/api/auth/") || path.startsWith("/uploads/");
+        // Only skip public endpoints, profile needs authentication
+        return path.startsWith("/api/auth/register") || 
+               path.startsWith("/api/auth/login") || 
+               path.startsWith("/api/auth/firebase-login") ||
+               path.startsWith("/api/auth/reset-password") ||
+               path.startsWith("/uploads/");
     }
 
     @Override

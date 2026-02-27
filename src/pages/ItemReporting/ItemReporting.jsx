@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { IoArrowBack, IoArrowForward, IoCloudUpload, IoCheckmark } from 'react-icons/io5';
+import { IoArrowBack, IoArrowForward, IoCheckmark, IoSparkles } from 'react-icons/io5';
 import axios from 'axios';
+import MultiImageUpload from '../../components/MultiImageUpload/MultiImageUpload';
+import QuickTemplates, { TEMPLATES } from '../../components/QuickTemplates/QuickTemplates';
 import './ItemReporting.css';
+import VoiceInput from '../../components/VoiceInput/VoiceInput';
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
 
@@ -16,22 +19,38 @@ const ItemReporting = () => {
     category: '',
     location: '',
     date: '',
-    contactInfo: '',
-    image: null
+    contactInfo: ''
   });
-  const [dragOver, setDragOver] = useState(false);
+  const [images, setImages] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [suggestedCategory, setSuggestedCategory] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const navigate = useNavigate();
 
+
+  // Handle AI auto-fill from voice
+const handleAIFill = (aiData) => {
+  setFormData(prev => ({
+    ...prev,
+    title: aiData.title || prev.title,
+    description: aiData.description || prev.description,
+    location: aiData.location || prev.location,
+    category: aiData.category || prev.category
+  }));
+};
+
+  // Show toast notification
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const steps = [
-    { number: 1, title: 'Item Details' },
-    { number: 2, title: 'Location & Date' },
-    { number: 3, title: 'Upload Image' },
-    { number: 4, title: 'Contact Info' }
+    { number: 1, title: 'Report Item' },
+    { number: 2, title: 'Review' }
   ];
 
   const categories = [
@@ -39,63 +58,57 @@ const ItemReporting = () => {
     'Sports Equipment', 'Personal Items', 'Documents', 'Keys', 'Other'
   ];
 
+  // Handle AI analysis results from image upload
+  const handleAIAnalysis = useCallback((analysisResult) => {
+    setAiAnalysis(analysisResult);
+    
+    // Auto-fill category if not already set
+    if (analysisResult.category && !formData.category) {
+      setFormData(prev => ({
+        ...prev,
+        category: analysisResult.category
+      }));
+    }
+  }, [formData.category]);
+
+  // Handle template selection
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template);
+    
+    // Auto-fill form with template data
+    setFormData(prev => ({
+      ...prev,
+      category: template.category,
+      description: template.description
+    }));
+  };
+
+  // Handle template detail click (color/brand/location/title)
+  const handleDetailClick = (type, value) => {
+    if (type === 'color') {
+      const newDesc = formData.description 
+        ? `${formData.description}, ${value} color` 
+        : `${value} color`;
+      setFormData(prev => ({ ...prev, description: newDesc }));
+      showToast(`Added color: ${value}`);
+    } else if (type === 'brand') {
+      const newDesc = formData.description 
+        ? `${formData.description}, ${value} brand` 
+        : `${value} brand`;
+      setFormData(prev => ({ ...prev, description: newDesc }));
+      showToast(`Added brand: ${value}`);
+    } else if (type === 'location') {
+      setFormData(prev => ({ ...prev, location: value }));
+      showToast(`Location set: ${value}`);
+    } else if (type === 'title') {
+      setFormData(prev => ({ ...prev, title: value }));
+      showToast(`Title set: ${value}`);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    let finalValue = value;
-    if (name === 'category' && value === '' && suggestedCategory) {
-      finalValue = suggestedCategory;
-    }
-    setFormData(prev => ({ ...prev, [name]: finalValue }));
-  };
-
-  const handleImageUpload = async (file) => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        setFormData(prev => ({ ...prev, image: e.target.result }));
-
-        // Google AI Tool: Get category suggestion from uploaded image
-        setIsAnalyzing(true);
-        try {
-          const token = localStorage.getItem('token');
-          const formDataToSend = new FormData();
-          formDataToSend.append('image', file);
-
-          const response = await axios.post(`${API_BASE}/api/items/suggest-category`, formDataToSend, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-
-          setSuggestedCategory(response.data);
-        } catch (error) {
-          console.error('Error getting category suggestion:', error);
-          setSuggestedCategory(''); // Fallback
-        } finally {
-          setIsAnalyzing(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      handleImageUpload(file);
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleNext = () => {
@@ -119,26 +132,26 @@ const ItemReporting = () => {
         setIsSubmitting(false);
         return;
       }
-      // Ensure date has seconds for proper ISO string
-      const dateWithSeconds = formData.date.includes(':') && formData.date.split(':').length === 2 ? `${formData.date}:00` : formData.date;
+
+      const dateWithSeconds = formData.date.includes(':') && formData.date.split(':').length === 2 
+        ? `${formData.date}:00` 
+        : formData.date;
 
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('category', formData.category);
-      formDataToSend.append('status', formData.type.toUpperCase()); // Map 'lost'/'found' to 'LOST'/'FOUND'
+      formDataToSend.append('status', formData.type.toUpperCase());
       formDataToSend.append('location', formData.location);
       formDataToSend.append('date', new Date(dateWithSeconds).toISOString());
       formDataToSend.append('description', formData.description);
       formDataToSend.append('contactInfo', formData.contactInfo);
 
-      // Handle image
-      if (formData.image && formData.image.startsWith('data:image/')) {
-        // Convert base64 to blob
-        const response = await fetch(formData.image);
-        const blob = await response.blob();
-        const file = new File([blob], 'image.jpg', { type: 'image/jpeg' });
-        formDataToSend.append('image', file);
-      }
+      // Append all images
+      images.forEach((image, index) => {
+        if (image.file) {
+          formDataToSend.append('images', image.file);
+        }
+      });
 
       await axios.post(`${API_BASE}/api/items`, formDataToSend, {
         headers: {
@@ -146,11 +159,11 @@ const ItemReporting = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      // Success
+
       setShowSuccess(true);
       setTimeout(() => {
         navigate('/dashboard');
-      }, 2000); // Navigate after 2 seconds
+      }, 2000);
     } catch (error) {
       console.error('Error submitting report:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to submit report. Please try again.';
@@ -200,6 +213,19 @@ const ItemReporting = () => {
             <p>Your {formData.type} item has been reported and stored in our database. Redirecting to dashboard...</p>
           </motion.div>
         )}
+        
+        {/* Toast Notification */}
+        {toast && (
+          <motion.div 
+            className="toast toast-success"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+          >
+            {toast}
+          </motion.div>
+        )}
+        
         <div className="progress-bar">
           {steps.map((step) => (
             <div 
@@ -231,7 +257,9 @@ const ItemReporting = () => {
             >
               {currentStep === 1 && (
                 <div className="step-content">
-                  <h2>What type of report is this?</h2>
+                  <h2>Report an Item</h2>
+                  
+                  {/* Type Selection */}
                   <div className="type-selection">
                     <motion.label 
                       className={`type-option ${formData.type === 'lost' ? 'selected' : ''}`}
@@ -272,6 +300,15 @@ const ItemReporting = () => {
                     </motion.label>
                   </div>
 
+                  {/* Quick Templates Section */}
+                  <div className="templates-section">
+                    <QuickTemplates 
+                      onSelectTemplate={handleTemplateSelect}
+                      selectedTemplate={selectedTemplate}
+                      onSelectDetail={handleDetailClick}
+                    />
+                  </div>
+
                   <div className="form-group">
                     <label>Item Title</label>
                     <input
@@ -286,22 +323,6 @@ const ItemReporting = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Category {suggestedCategory && <span className="ai-suggestion">(AI Suggested: {suggestedCategory})</span>}</label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="form-input"
-                    >
-                      <option value="">{suggestedCategory ? `Use AI Suggestion: ${suggestedCategory}` : 'Select a category'}</option>
-                      {categories.map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                    {isAnalyzing && <div className="analyzing">🤖 Analyzing image for category suggestion...</div>}
-                  </div>
-
-                  <div className="form-group">
                     <label>Description</label>
                     <textarea
                       name="description"
@@ -313,13 +334,24 @@ const ItemReporting = () => {
                       required
                     />
                   </div>
-                </div>
-              )}
 
-              {currentStep === 2 && (
-                <div className="step-content">
-                  <h2>Where and when?</h2>
-                  
+                  <VoiceInput
+  onTranscript={(text) =>
+    setFormData(prev => ({ ...prev, description: text }))
+  }
+  onAIFill={handleAIFill}
+  existingText={formData.description}
+  placeholder="Describe the item..."
+/>
+
+                  {/* Template Category Display */}
+                  {selectedTemplate && (
+                    <div className="template-category-display">
+                      <span className="category-label">Category:</span>
+                      <span className="category-value">{selectedTemplate.category}</span>
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label>Location</label>
                     <input
@@ -344,66 +376,18 @@ const ItemReporting = () => {
                       required
                     />
                   </div>
-                </div>
-              )}
 
-              {currentStep === 3 && (
-                <div className="step-content">
-                  <h2>Upload an image (optional)</h2>
-                  
-                  <div 
-                    className={`image-upload-zone ${dragOver ? 'drag-over' : ''} ${formData.image ? 'has-image' : ''}`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={() => document.getElementById('imageInput').click()}
-                  >
-                    {formData.image ? (
-                      <motion.div 
-                        className="image-preview"
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <img src={formData.image} alt="Preview" />
-                        <button 
-                          className="remove-image"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData(prev => ({ ...prev, image: null }));
-                          }}
-                        >
-                          ×
-                        </button>
-                      </motion.div>
-                    ) : (
-                      <div className="upload-content">
-                        <motion.div 
-                          className="upload-icon"
-                          animate={dragOver ? { scale: 1.2, rotate: 5 } : {}}
-                        >
-                          <IoCloudUpload />
-                        </motion.div>
-                        <h3>Drop your image here</h3>
-                        <p>or click to browse</p>
-                      </div>
-                    )}
+                  {/* Upload Images - On same page */}
+                  <div className="upload-images-section">
+                    <h3>Upload Images (up to 5)</h3>
+                    <MultiImageUpload
+                      images={images}
+                      setImages={setImages}
+                      onAIAnalysis={handleAIAnalysis}
+                    />
                   </div>
-                  
-                  <input
-                    type="file"
-                    id="imageInput"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e.target.files[0])}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-              )}
 
-              {currentStep === 4 && (
-                <div className="step-content">
-                  <h2>How can we contact you?</h2>
-                  
+                  {/* Contact Information - On same page */}
                   <div className="form-group">
                     <label>Contact Information</label>
                     <input
@@ -419,6 +403,45 @@ const ItemReporting = () => {
 
                   <div className="privacy-notice">
                     <p>Your contact information will only be shared with users who have a potential match for your item.</p>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="step-content">
+                  <h2>Review Your Report</h2>
+                  
+                  {/* Summary */}
+                  <div className="form-summary">
+                    <h4>Report Summary</h4>
+                    <div className="summary-item">
+                      <span>Type:</span>
+                      <strong>{formData.type === 'lost' ? 'Lost' : 'Found'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Title:</span>
+                      <strong>{formData.title || 'Not specified'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Category:</span>
+                      <strong>{selectedTemplate?.category || formData.category || 'Not specified'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Description:</span>
+                      <strong>{formData.description || 'Not specified'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Location:</span>
+                      <strong>{formData.location || 'Not specified'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Date:</span>
+                      <strong>{formData.date ? new Date(formData.date).toLocaleString() : 'Not specified'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Images:</span>
+                      <strong>{images.length} image(s)</strong>
+                    </div>
                   </div>
                 </div>
               )}
@@ -459,7 +482,7 @@ const ItemReporting = () => {
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
                 {isSubmitting ? (
-                  <div className="loading-spinner"></div>
+                  <div className="loading-spinner" />
                 ) : (
                   'Submit Report'
                 )}

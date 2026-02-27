@@ -37,20 +37,28 @@ const ItemCard = ({ item, onDelete }) => {
       transition={{ duration: 0.3 }}
       onClick={() => navigate(`/item/${item.id}`)}
     >
-      <div className="item-image">
-        <img src={item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/placeholder-image.svg'} alt={item.title} />
-        <div className="item-overlay">
-          <motion.button 
-            className="view-details-btn"
-            initial={{ y: 20, opacity: 0 }}
-            whileHover={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            View Details
-          </motion.button>
-        </div>
+      <div className="item-image-full">
+    <img 
+      src={item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/placeholder-image.svg'} 
+      alt={item.title}
+      className="full-image"
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/placeholder-image.svg';
+      }}
+    />
+    <div className="item-overlay">
+      <motion.button 
+        className="view-details-btn"
+        initial={{ y: 20, opacity: 0 }}
+        whileHover={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        View Details
+      </motion.button>
+    </div>
       </div>
-      
+
       <div className="item-content">
         <div className="item-header">
           <h3 className="item-title">{item.title}</h3>

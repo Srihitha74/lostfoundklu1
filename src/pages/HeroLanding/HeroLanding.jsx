@@ -36,25 +36,11 @@ const HeroLanding = () => {
     }
   };
 
-  const buttonVariants = {
-    hidden: { y: 30, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
-
   return (
     <div className="hero-landing">
       <div className="hero-background"></div>
-      
-      <motion.div 
+
+      <motion.div
         className="hero-content"
         variants={containerVariants}
         initial="hidden"
@@ -69,37 +55,48 @@ const HeroLanding = () => {
           </motion.p>
         </motion.div>
 
-        <motion.div className="hero-buttons" variants={itemVariants}>
-          <motion.button 
-            className="btn btn-secondary hero-btn"
-            variants={buttonVariants}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/report')}
-          >
-            Report Lost Item
-          </motion.button>
-          
-          <motion.button 
-            className="btn btn-primary hero-btn"
-            variants={buttonVariants}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/report')}
-          >
-            Report Found Item
-          </motion.button>
-          
-          <motion.button 
-            className="btn btn-accent hero-btn"
-            variants={buttonVariants}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/feed')}
-          >
-            Community Feed
-          </motion.button>
-        </motion.div>
+        {/* Story Animation in the middle */}
+        <div className="story-animation">
+          {/* Clouds */}
+          <div className="cloud cloud-1"></div>
+          <div className="cloud cloud-2"></div>
+          <div className="cloud cloud-3"></div>
+
+          {/* Ground and path */}
+          <div className="ground"></div>
+          <div className="path"></div>
+
+          {/* Girl character */}
+          <div className="girl">
+            <div className="girl-hair"></div>
+            <div className="girl-head"></div>
+            <div className="girl-body"></div>
+            <div className="girl-arm-left"></div>
+            <div className="girl-arm-right"></div>
+          </div>
+
+          {/* Book item */}
+          <div className="book"></div>
+
+          {/* Boy character */}
+          <div className="boy">
+            <div className="boy-hair"></div>
+            <div className="boy-head"></div>
+            <div className="boy-body"></div>
+            <div className="boy-arm-left"></div>
+            <div className="boy-arm-right"></div>
+          </div>
+
+          {/* Thought bubbles */}
+          <div className="thought-bubble thought-girl"></div>
+          <div className="thought-bubble thought-boy"></div>
+
+          {/* Heart when found */}
+          <div className="heart"></div>
+
+          {/* Story text */}
+          <div className="story-text">Girl walking with her book...</div>
+        </div>
 
         <motion.div className="hero-login" variants={itemVariants}>
           <p>Already have an account?
@@ -113,9 +110,9 @@ const HeroLanding = () => {
         </motion.div>
       </motion.div>
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </div>
   );

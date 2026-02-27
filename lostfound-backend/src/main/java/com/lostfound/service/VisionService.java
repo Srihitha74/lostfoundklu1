@@ -23,59 +23,125 @@ public class VisionService {
         Map.entry("smartphone", "Electronics"),
         Map.entry("laptop", "Electronics"),
         Map.entry("computer", "Electronics"),
+        Map.entry("tablet", "Electronics"),
         Map.entry("wallet", "Accessories"),
         Map.entry("purse", "Accessories"),
         Map.entry("key", "Keys"),
         Map.entry("keys", "Keys"),
+        Map.entry("card", "Accessories"),
         Map.entry("book", "Books"),
         Map.entry("books", "Books"),
+        Map.entry("notebook", "Books"),
         Map.entry("shirt", "Clothing"),
         Map.entry("jacket", "Clothing"),
         Map.entry("clothing", "Clothing"),
         Map.entry("bag", "Bags"),
-        Map.entry("backpack", "Bags")
+        Map.entry("backpack", "Bags"),
+        Map.entry("headphones", "Electronics"),
+        Map.entry("earbuds", "Electronics"),
+        Map.entry("watch", "Accessories"),
+        Map.entry("glasses", "Accessories"),
+        Map.entry("sunglasses", "Accessories"),
+        Map.entry("umbrella", "Accessories"),
+        Map.entry("charger", "Electronics"),
+        Map.entry("cable", "Electronics")
     );
 
-    // Google Cloud Vision API: Analyze image and detect category
-    public String analyzeImageAndDetectCategory(String imagePath) {
+    // Brand detection patterns
+    private static final Set<String> KNOWN_BRANDS = Set.of(
+        "apple", "samsung", "google", "microsoft", "dell", "hp", "lenovo", "asus",
+        "sony", "bose", "beats", "jbl", "marshall", "nike", "adidas", "puma",
+        "under armour", "north face", "columbia", "zara", "h&m", "uniqlo",
+        "ray-ban", "oakley", "warby parker", "versace", "gucci", "prada",
+        "hermes", "lv", "tiffany", "cartier", "rolex", "omega", "seiko",
+        "fitbit", "garmin", "polaroid", "canon", "nikon", "fujifilm",
+        "logitech", "razer", "corsair", "steelSeries", "hyperx"
+    );
+
+    // Color detection patterns
+    private static final Set<String> COLOR_NAMES = Set.of(
+        "black", "white", "red", "blue", "green", "yellow", "orange", "purple",
+        "pink", "brown", "gray", "grey", "navy", "beige", "tan", "burgundy",
+        "maroon", "teal", "turquoise", "gold", "silver", "bronze", "camo",
+        "pattern", "stripes", "plaid", "solid"
+    );
+
+    /**
+     * Phase 1: Enhanced image analysis returning comprehensive AI analysis results
+     */
+    public EnhancedAnalysisResult analyzeImageEnhanced(String imagePath) {
+        EnhancedAnalysisResult result = new EnhancedAnalysisResult();
+        
         try {
-            List<String> labels = analyzeImageWithVisionAPI(imagePath);
-            return mapLabelsToCategory(labels);
+            // Use Vision API for label detection
+            List<Map<String, Object>> labels = analyzeImageWithVisionAPIEnhanced(imagePath);
+            
+            if (labels != null && !labels.isEmpty()) {
+                // Extract category from top label
+                String detectedCategory = mapLabelsToCategoryEnhanced(labels);
+                result.setCategory(detectedCategory);
+                
+                // Extract confidence from top result
+                double confidence = 0.0;
+                Object scoreObj = labels.get(0).get("score");
+                if (scoreObj != null) {
+                    confidence = ((Number) scoreObj).doubleValue() * 100;
+                }
+                result.setConfidenceScore(confidence);
+                
+                // Extract colors from labels
+                List<String> colors = extractColors(labels);
+                result.setDetectedColors(String.join(", ", colors));
+                
+                // Extract brands from labels
+                List<String> brands = extractBrands(labels);
+                result.setDetectedBrands(String.join(", ", brands));
+                
+                // Extract all labels for matching
+                List<String> allLabels = new ArrayList<>();
+                for (Map<String, Object> label : labels) {
+                    String desc = (String) label.get("description");
+                    if (desc != null) {
+                        allLabels.add(desc.toLowerCase());
+                    }
+                }
+                result.setLabels(allLabels);
+            } else {
+                // Fallback analysis
+                result = fallbackEnhancedAnalysis(imagePath);
+            }
         } catch (Exception e) {
-            System.err.println("Error analyzing image with Vision API: " + e.getMessage());
-            // Fallback to filename-based detection
-            return fallbackCategoryDetection(imagePath);
+            System.err.println("Error in enhanced image analysis: " + e.getMessage());
+            result = fallbackEnhancedAnalysis(imagePath);
         }
+        
+        return result;
     }
 
-    // Google Cloud Vision API: Extract AI labels from image analysis
-    public List<String> analyzeImageAndExtractLabels(String imagePath) {
-        try {
-            return analyzeImageWithVisionAPI(imagePath);
-        } catch (Exception e) {
-            System.err.println("Error extracting labels with Vision API: " + e.getMessage());
-            // Fallback to filename-based labels
-            return fallbackLabelExtraction(imagePath);
-        }
-    }
-
-    private List<String> analyzeImageWithVisionAPI(String imagePath) throws Exception {
+    /**
+     * Enhanced Vision API call with more features
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> analyzeImageWithVisionAPIEnhanced(String imagePath) throws Exception {
         if (apiKey == null || apiKey.isEmpty()) {
             throw new Exception("Google Cloud Vision API key not configured");
         }
 
-        // Read image file
         byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
 
-        // Build REST API request
         String url = "https://vision.googleapis.com/v1/images:annotate?key=" + apiKey;
 
+        // Request multiple features: labels and text (for brand detection)
         Map<String, Object> requestBody = Map.of(
             "requests", List.of(
                 Map.of(
                     "image", Map.of("content", base64Image),
-                    "features", List.of(Map.of("type", "LABEL_DETECTION", "maxResults", 10))
+                    "features", List.of(
+                        Map.of("type", "LABEL_DETECTION", "maxResults", 15),
+                        Map.of("type", "TEXT_DETECTION", "maxResults", 5),
+                        Map.of("type", "IMAGE_PROPERTIES", "maxResults", 5)
+                    )
                 )
             )
         );
@@ -91,7 +157,6 @@ public class VisionService {
             throw new Exception("Vision API request failed with status: " + response.getStatusCode());
         }
 
-        // Parse response
         Map responseBody = response.getBody();
         List<Map> responses = (List<Map>) responseBody.get("responses");
         if (responses == null || responses.isEmpty()) {
@@ -103,30 +168,125 @@ public class VisionService {
             throw new Exception("Vision API error: " + firstResponse.get("error"));
         }
 
-        List<Map> labelAnnotations = (List<Map>) firstResponse.get("labelAnnotations");
-        if (labelAnnotations == null) {
-            return new ArrayList<>();
-        }
-
-        List<String> labels = new ArrayList<>();
-        for (Map annotation : labelAnnotations) {
-            String description = (String) annotation.get("description");
-            if (description != null) {
-                labels.add(description.toLowerCase());
+        // Extract label annotations
+        List<Map<String, Object>> labelAnnotations = (List<Map<String, Object>>) firstResponse.get("labelAnnotations");
+        
+        // Also check for text annotations (brand names, etc.)
+        Map<String, Object> textAnnotation = (Map<String, Object>) firstResponse.get("textAnnotations");
+        if (textAnnotation != null) {
+            List<Map<String, Object>> textAnnotations = (List<Map<String, Object>>) textAnnotation.get("text");
+            if (textAnnotations != null && !textAnnotations.isEmpty()) {
+                // Add detected text as labels for brand detection
+                for (Map<String, Object> text : textAnnotations) {
+                    if (labelAnnotations == null) {
+                        labelAnnotations = new ArrayList<>();
+                    }
+                    labelAnnotations.add(Map.of(
+                        "description", ((String) text.get("description")).toLowerCase(),
+                        "score", 0.9
+                    ));
+                }
             }
         }
 
-        return labels;
+        return labelAnnotations != null ? labelAnnotations : new ArrayList<>();
     }
 
-    private String mapLabelsToCategory(List<String> labels) {
-        for (String label : labels) {
-            String category = CATEGORY_MAPPING.get(label);
+    private String mapLabelsToCategoryEnhanced(List<Map<String, Object>> labels) {
+        for (Map<String, Object> label : labels) {
+            String description = ((String) label.get("description")).toLowerCase();
+            String category = CATEGORY_MAPPING.get(description);
             if (category != null) {
                 return category;
             }
+            // Check for partial matches
+            for (Map.Entry<String, String> entry : CATEGORY_MAPPING.entrySet()) {
+                if (description.contains(entry.getKey()) || entry.getKey().contains(description)) {
+                    return entry.getValue();
+                }
+            }
         }
-        return "Unknown"; // Default category
+        return "Other";
+    }
+
+    private List<String> extractColors(List<Map<String, Object>> labels) {
+        List<String> colors = new ArrayList<>();
+        for (Map<String, Object> label : labels) {
+            String description = ((String) label.get("description")).toLowerCase();
+            if (COLOR_NAMES.contains(description)) {
+                colors.add(capitalizeFirst(description));
+            }
+        }
+        return colors.isEmpty() ? List.of("Unknown") : colors;
+    }
+
+    private List<String> extractBrands(List<Map<String, Object>> labels) {
+        List<String> brands = new ArrayList<>();
+        for (Map<String, Object> label : labels) {
+            String description = ((String) label.get("description")).toLowerCase();
+            if (KNOWN_BRANDS.contains(description)) {
+                brands.add(capitalizeFirst(description));
+            }
+        }
+        return brands;
+    }
+
+    private String capitalizeFirst(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    private EnhancedAnalysisResult fallbackEnhancedAnalysis(String imagePath) {
+        EnhancedAnalysisResult result = new EnhancedAnalysisResult();
+        
+        String fileName = imagePath.toLowerCase();
+        
+        // Detect category from filename
+        String detectedCategory = "Other";
+        for (Map.Entry<String, String> entry : CATEGORY_MAPPING.entrySet()) {
+            if (fileName.contains(entry.getKey())) {
+                detectedCategory = entry.getValue();
+                break;
+            }
+        }
+        result.setCategory(detectedCategory);
+        result.setConfidenceScore(50.0);
+        result.setDetectedColors("Unknown");
+        result.setDetectedBrands("");
+        result.setLabels(Arrays.asList("object", "item", detectedCategory.toLowerCase()));
+        
+        return result;
+    }
+
+    // Google Cloud Vision API: Analyze image and detect category
+    public String analyzeImageAndDetectCategory(String imagePath) {
+        try {
+            List<Map<String, Object>> labels = analyzeImageWithVisionAPIEnhanced(imagePath);
+            return mapLabelsToCategoryEnhanced(labels);
+        } catch (Exception e) {
+            System.err.println("Error analyzing image with Vision API: " + e.getMessage());
+            return fallbackCategoryDetection(imagePath);
+        }
+    }
+
+    // Google Cloud Vision API: Extract AI labels from image analysis
+    public List<String> analyzeImageAndExtractLabels(String imagePath) {
+        try {
+            List<Map<String, Object>> labels = analyzeImageWithVisionAPIEnhanced(imagePath);
+            List<String> result = new ArrayList<>();
+            for (Map<String, Object> label : labels) {
+                String desc = (String) label.get("description");
+                if (desc != null) {
+                    result.add(desc.toLowerCase());
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error extracting labels with Vision API: " + e.getMessage());
+            return fallbackLabelExtraction(imagePath);
+        }
     }
 
     private String fallbackCategoryDetection(String imagePath) {
@@ -136,7 +296,7 @@ public class VisionService {
                 return entry.getValue();
             }
         }
-        return "Unknown";
+        return "Other";
     }
 
     private List<String> fallbackLabelExtraction(String imagePath) {
@@ -145,7 +305,6 @@ public class VisionService {
 
         for (Map.Entry<String, String> entry : CATEGORY_MAPPING.entrySet()) {
             if (fileName.contains(entry.getKey())) {
-                // Add some related labels
                 switch (entry.getValue()) {
                     case "Electronics":
                         labels.addAll(Arrays.asList("electronics", "device", "technology"));
@@ -170,5 +329,56 @@ public class VisionService {
             }
         }
         return labels;
+    }
+
+    /**
+     * Enhanced Analysis Result DTO
+     */
+    public static class EnhancedAnalysisResult {
+        private String category;
+        private Double confidenceScore;
+        private String detectedColors;
+        private String detectedBrands;
+        private List<String> labels;
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
+        }
+
+        public Double getConfidenceScore() {
+            return confidenceScore;
+        }
+
+        public void setConfidenceScore(Double confidenceScore) {
+            this.confidenceScore = confidenceScore;
+        }
+
+        public String getDetectedColors() {
+            return detectedColors;
+        }
+
+        public void setDetectedColors(String detectedColors) {
+            this.detectedColors = detectedColors;
+        }
+
+        public String getDetectedBrands() {
+            return detectedBrands;
+        }
+
+        public void setDetectedBrands(String detectedBrands) {
+            this.detectedBrands = detectedBrands;
+        }
+
+        public List<String> getLabels() {
+            return labels;
+        }
+
+        public void setLabels(List<String> labels) {
+            this.labels = labels;
+        }
     }
 }
