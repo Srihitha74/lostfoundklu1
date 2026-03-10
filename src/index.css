@@ -1,3 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ============================================
+   Main Entry CSS - Import Global Styles
+   ============================================ */
+
+@import './styles/global.css';

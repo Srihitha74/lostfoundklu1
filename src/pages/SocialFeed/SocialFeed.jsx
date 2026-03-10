@@ -13,15 +13,42 @@ import {
 import axios from 'axios';
 import './SocialFeed.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
 
 const SocialFeed = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
   
   const navigate = useNavigate();
+
+  // Get current user email from token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Decode token to get email (simple base64 decode for JWT)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setCurrentUserEmail(payload.sub || payload.email);
+      } catch (e) {
+        // Fallback: try to get from profile API
+        fetchUserProfile(token);
+      }
+    }
+  }, []);
+
+  const fetchUserProfile = async (token) => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCurrentUserEmail(response.data.email);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -37,7 +64,8 @@ const SocialFeed = () => {
           category: item.category,
           userInitials: item.user ? item.user.name.charAt(0).toUpperCase() : 'U',
           username: item.user ? item.user.name : 'Unknown',
-          contactInfo: item.user ? item.user.email : '',
+          userEmail: item.user ? item.user.email : '',
+          ownerId: item.user ? item.user.id : null,
           image: item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/default-image.png' // Assuming a default image
         }));
         setPosts(mappedPosts);
@@ -182,6 +210,15 @@ const SocialFeed = () => {
                   <div className="post-content">
                     <h2 className="post-title">{post.title}</h2>
                     <p className="post-description">{post.description}</p>
+
+                    {post.image && post.image !== `${API_BASE}/default-image.png` && (
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        style={{width:'100%',maxHeight:'280px',objectFit:'cover',borderRadius:'24px',marginBottom:'12px'}}
+                        onError={e => { e.target.style.display='none'; }}
+                      />
+                    )}
                     
                     <div className="post-meta">
                       <div className="meta-item">
@@ -193,30 +230,37 @@ const SocialFeed = () => {
                   </div>
 
                   <div className="post-actions">
-                    <motion.button
-                      className="action-btn contact-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleContactUser(post);
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <IoCall />
-                      Contact
-                    </motion.button>
-                    <motion.button
-                      className="action-btn message-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMessageUser(post);
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <IoChatbubble />
-                      Message
-                    </motion.button>
+                    {currentUserEmail && post.userEmail !== currentUserEmail && (
+                      <>
+                        <motion.button
+                          className="action-btn contact-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleContactUser(post);
+                          }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <IoCall />
+                          Contact
+                        </motion.button>
+                        <motion.button
+                          className="action-btn message-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMessageUser(post);
+                          }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <IoChatbubble />
+                          Message
+                        </motion.button>
+                      </>
+                    )}
+                    {(!currentUserEmail || post.userEmail === currentUserEmail) && (
+                      <div className="your-post-label">Your Post</div>
+                    )}
                   </div>
                 </motion.div>
               ))}

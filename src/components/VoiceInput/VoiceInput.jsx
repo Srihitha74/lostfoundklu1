@@ -14,64 +14,139 @@ import {
 } from 'react-icons/io5';
 import './VoiceInput.css';
 
-// ─── Gemini API helper ────────────────────────────────────────────────────────
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// ─── Free Local Smart Parser (no API key needed!) ────────────────────────────
 
-async function extractFieldsWithGemini(transcript) {
-  const prompt = `
-You are a smart assistant for a campus lost-and-found app.
-
-A user described an item they lost or found using voice. Extract structured information from the transcript below and return ONLY a valid JSON object with these exact keys:
-
-{
-  "type": "lost" or "found" (detect from context, default to "lost"),
-  "title": "short item name e.g. Black iPhone 15 Pro",
-  "category": one of ["Electronics","Clothing","Bags & Accessories","Books & Stationery","Sports Equipment","Personal Items","Documents","Keys","Other"],
-  "description": "a clean 1-2 sentence description using details mentioned",
-  "location": "location mentioned, or empty string",
-  "date": "date mentioned in YYYY-MM-DD format, or empty string"
+function cap(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-Rules:
-- Return ONLY the JSON object, no markdown, no code fences, no explanation.
-- If a field cannot be determined, use an empty string.
-- Infer category intelligently (e.g. phone/earbuds → Electronics, wallet → Personal Items, ID card → Documents).
-- Title should be concise, 3–6 words max.
-
-Transcript: "${transcript}"
-`;
-
- const res = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 512 }
-    })
-  }
-);
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err?.error?.message || 'Gemini API error');
-  }
-
-  const data = await res.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const cleaned = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(cleaned);
+function getLastWeekday(dayOfWeek) {
+  const today = new Date();
+  const diff = (today.getDay() - dayOfWeek + 7) % 7 || 7;
+  const d = new Date(today);
+  d.setDate(d.getDate() - diff);
+  return d.toISOString().split('T')[0];
 }
 
-// ─── Field display labels ─────────────────────────────────────────────────────
+function extractFieldsLocally(transcript) {
+  const text = transcript.toLowerCase();
+
+  // ── Type: lost or found ──────────────────────────────────────────────────
+  let type = 'lost';
+  if (/\b(found|discovered|picked up|i found|someone found|i have found|came across)\b/.test(text)) {
+    type = 'found';
+  } else if (/\b(lost|missing|can'?t find|cannot find|misplaced|i lost|dropped|i've lost)\b/.test(text)) {
+    type = 'lost';
+  }
+
+  // ── Category ─────────────────────────────────────────────────────────────
+  const categoryMap = [
+    { keywords: ['phone', 'iphone', 'samsung', 'mobile', 'charger', 'earbuds', 'airpods', 'headphones', 'laptop', 'tablet', 'ipad', 'macbook', 'earphone', 'cable', 'powerbank', 'camera', 'smartwatch'], category: 'Electronics' },
+    { keywords: ['wallet', 'purse', 'bag', 'backpack', 'handbag', 'pouch', 'suitcase', 'luggage', 'tote'], category: 'Bags & Accessories' },
+    { keywords: ['shirt', 'jacket', 'hoodie', 'sweater', 'cap', 'hat', 'shoes', 'sandals', 'clothes', 'uniform', 'scarf', 'gloves', 'coat', 'pants', 'jeans'], category: 'Clothing' },
+    { keywords: ['book', 'notebook', 'notes', 'textbook', 'pen', 'pencil', 'calculator', 'stationery', 'diary', 'folder', 'binder'], category: 'Books & Stationery' },
+    { keywords: ['id card', 'passport', 'licence', 'license', 'document', 'certificate', 'aadhar', 'pan card', 'hall ticket'], category: 'Documents' },
+    { keywords: ['key', 'keys', 'keychain'], category: 'Keys' },
+    { keywords: ['bottle', 'lunch box', 'tiffin', 'umbrella', 'watch', 'glasses', 'spectacles', 'ring', 'bracelet', 'necklace', 'jewellery'], category: 'Personal Items' },
+    { keywords: ['ball', 'bat', 'racket', 'racquet', 'helmet', 'sports', 'jersey', 'gym'], category: 'Sports Equipment' },
+  ];
+
+  let category = 'Other';
+  for (const { keywords, category: cat } of categoryMap) {
+    if (keywords.some(k => text.includes(k))) { category = cat; break; }
+  }
+
+  // ── Title ─────────────────────────────────────────────────────────────────
+  const colors    = ['black', 'white', 'red', 'blue', 'green', 'yellow', 'grey', 'gray', 'brown', 'pink', 'purple', 'orange', 'silver', 'golden', 'gold'];
+  const itemKws   = ['phone', 'iphone', 'samsung', 'wallet', 'bag', 'backpack', 'laptop', 'charger',
+                     'earbuds', 'airpods', 'headphones', 'key', 'keys', 'id card', 'book', 'notebook',
+                     'watch', 'glasses', 'bottle', 'umbrella', 'jacket', 'shoes', 'pen', 'calculator',
+                     'tablet', 'ipad', 'macbook', 'powerbank', 'camera', 'purse', 'tiffin', 'lunch box'];
+  const colorFound = colors.find(c => text.includes(c));
+  const itemFound  = itemKws.find(i => text.includes(i));
+
+  let title = '';
+  if (colorFound && itemFound) title = cap(colorFound) + ' ' + cap(itemFound);
+  else if (itemFound)           title = cap(itemFound);
+  else                          title = transcript.trim().split(' ').slice(0, 5).join(' ');
+
+  // ── Location ──────────────────────────────────────────────────────────────
+  // Priority 1: room/block codes — C424, B2, Lab3, Room 201, Block A, etc.
+  let location = '';
+  const roomCodeMatch = transcript.match(
+    /\b([A-Za-z]{1,5}\s*\d{1,4}|(?:room|lab|hall|block|floor|building|gate)\s+[A-Za-z0-9]{1,5})\b/i
+  );
+  if (roomCodeMatch) {
+    location = cap(roomCodeMatch[0].trim());
+  }
+
+  // Priority 2: preposition + place name — "at the library", "near the canteen"
+  if (!location) {
+    const prepMatch = transcript.match(
+      /\b(?:at|in|near|inside|outside|from|found at|found in|lost at|lost in|left at|it was at)\s+(?:the\s+)?([A-Za-z0-9][A-Za-z0-9 ]{1,30}?)(?=\s+(?:on|at|this|yesterday|today|around|,|\.|$))/i
+    );
+    if (prepMatch && prepMatch[1]) location = cap(prepMatch[1].trim());
+  }
+
+  // Priority 3: named campus place keywords
+  if (!location) {
+    const places = ['library', 'canteen', 'cafeteria', 'hostel', 'lab', 'classroom', 'ground',
+                    'gym', 'park', 'gate', 'auditorium', 'restroom', 'parking', 'bus stop',
+                    'garden', 'corridor', 'office', 'reception', 'campus', 'department'];
+    const placeFound = places.find(p => text.includes(p));
+    if (placeFound) location = cap(placeFound);
+  }
+
+  // ── Time ──────────────────────────────────────────────────────────────────
+  let time = '';
+  const timeMatch = transcript.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+  if (timeMatch) {
+    let hours  = parseInt(timeMatch[1]);
+    const mins = timeMatch[2] || '00';
+    const ampm = timeMatch[3].toLowerCase();
+    if (ampm === 'pm' && hours < 12) hours += 12;
+    if (ampm === 'am' && hours === 12) hours = 0;
+    time = String(hours).padStart(2, '0') + ':' + mins;
+  } else if (/\bmorning\b/.test(text))   { time = '08:00'; }
+    else if (/\bafternoon\b/.test(text)) { time = '13:00'; }
+    else if (/\bevening\b/.test(text))   { time = '18:00'; }
+    else if (/\bnight\b/.test(text))     { time = '20:00'; }
+
+  // ── Date ──────────────────────────────────────────────────────────────────
+  const today = new Date();
+  let dateOnly = '';
+  if (/\b(today|this morning|this evening|this afternoon|just now)\b/.test(text)) {
+    dateOnly = today.toISOString().split('T')[0];
+  } else if (/\byesterday\b/.test(text)) {
+    const y = new Date(today); y.setDate(y.getDate() - 1);
+    dateOnly = y.toISOString().split('T')[0];
+  } else {
+    const days = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 0 };
+    for (const [name, num] of Object.entries(days)) {
+      if (text.includes(name)) { dateOnly = getLastWeekday(num); break; }
+    }
+  }
+
+  // Combine into datetime-local format: YYYY-MM-DDTHH:MM
+  let date = '';
+  if (dateOnly && time) date = `${dateOnly}T${time}`;
+  else if (dateOnly)    date = `${dateOnly}T08:00`;
+
+  // ── Description ───────────────────────────────────────────────────────────
+  const description = cap(transcript.trim());
+
+  return { type, title, category, description, location, date };
+}
+
+// ─── Field Labels & Icons ─────────────────────────────────────────────────────
 const FIELD_LABELS = {
   type:        'Type (Lost/Found)',
   title:       'Item Title',
   category:    'Category',
   description: 'Description',
   location:    'Location',
-  date:        'Date'
+  date:        'Date & Time',
 };
 
 const FIELD_ICONS = {
@@ -80,7 +155,7 @@ const FIELD_ICONS = {
   category:    '🗂️',
   description: '📝',
   location:    '📍',
-  date:        '📅'
+  date:        '📅',
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -101,7 +176,6 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
   const audioCtxRef    = useRef(null);
   const animFrameRef   = useRef(null);
 
-  // ── Setup Speech Recognition ──────────────────────────────────────────────
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { setIsSupported(false); return; }
@@ -136,7 +210,6 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
     };
 
     recognitionRef.current = rec;
-
     return () => {
       rec.stop();
       if (audioCtxRef.current) audioCtxRef.current.close();
@@ -146,7 +219,6 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
 
   useEffect(() => { setTranscript(existingText); }, [existingText]);
 
-  // ── Audio Visualisation ───────────────────────────────────────────────────
   const startViz = async () => {
     try {
       const stream   = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -156,13 +228,11 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       ctx.createMediaStreamSource(stream).connect(analyser);
       audioCtxRef.current = ctx;
       analyserRef.current = analyser;
-
       const data = new Uint8Array(analyser.frequencyBinCount);
       const tick = () => {
         if (!analyserRef.current) return;
         analyser.getByteFrequencyData(data);
-        const avg = data.reduce((a, b) => a + b, 0) / data.length;
-        setVolume(Math.min(avg / 100, 1));
+        setVolume(Math.min(data.reduce((a, b) => a + b, 0) / data.length / 100, 1));
         animFrameRef.current = requestAnimationFrame(tick);
       };
       tick();
@@ -177,10 +247,7 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
 
   const startListening = async () => {
     if (!isSupported || !recognitionRef.current) return;
-    setError(null);
-    setAiResult(null);
-    setShowPreview(false);
-    setAppliedFields([]);
+    setError(null); setAiResult(null); setShowPreview(false); setAppliedFields([]);
     await startViz();
     recognitionRef.current.start();
   };
@@ -190,19 +257,16 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
     stopViz();
   };
 
-  // ── Gemini AI ─────────────────────────────────────────────────────────────
   const handleAnalyseWithAI = async () => {
     if (!transcript.trim()) return;
-    setIsProcessingAI(true);
-    setError(null);
-    setShowPreview(false);
-
+    setIsProcessingAI(true); setError(null); setShowPreview(false);
     try {
-      const result = await extractFieldsWithGemini(transcript.trim());
+      await new Promise(r => setTimeout(r, 600));
+      const result = extractFieldsLocally(transcript.trim());
       setAiResult(result);
       setShowPreview(true);
     } catch (err) {
-      setError(`AI parsing failed: ${err.message}. Make sure VITE_GEMINI_API_KEY is set.`);
+      setError(`Parsing failed: ${err.message}. Please fill the form manually.`);
     } finally {
       setIsProcessingAI(false);
     }
@@ -221,20 +285,11 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
     setAppliedFields(prev => [...prev, field]);
   };
 
-  const handleRawTranscript = () => {
-    onTranscript?.(transcript);
-  };
-
   const handleClear = () => {
-    setTranscript('');
-    setInterimTranscript('');
-    setAiResult(null);
-    setShowPreview(false);
-    setAppliedFields([]);
-    setError(null);
+    setTranscript(''); setInterimTranscript(''); setAiResult(null);
+    setShowPreview(false); setAppliedFields([]); setError(null);
   };
 
-  // ── Unsupported ───────────────────────────────────────────────────────────
   if (!isSupported) {
     return (
       <div className="voice-input-unsupported">
@@ -245,7 +300,6 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="voice-input-container">
 
@@ -253,29 +307,16 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       <div className="mic-button-wrapper">
         <AnimatePresence mode="wait">
           {!isListening ? (
-            <motion.button
-              key="start"
-              className="mic-button"
-              onClick={startListening}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-            >
+            <motion.button key="start" className="mic-button" onClick={startListening}
+              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
               <div className="mic-icon"><IoMic /></div>
               <span>Tap to speak</span>
-              <small className="mic-hint">✨ Google Gemini AI will auto-fill your form</small>
+              <small className="mic-hint">✨ Detects item, location, date &amp; time automatically</small>
             </motion.button>
           ) : (
-            <motion.button
-              key="stop"
-              className="mic-button listening"
-              onClick={stopListening}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-            >
+            <motion.button key="stop" className="mic-button listening" onClick={stopListening}
+              initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
               <div className="mic-icon pulsing">
                 <IoStop />
                 <div className="volume-indicator" style={{ transform: `scale(${1 + volume * 0.6})` }} />
@@ -289,25 +330,18 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       {/* Audio Bars */}
       <AnimatePresence>
         {isListening && (
-          <motion.div
-            className="audio-visualization"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
+          <motion.div className="audio-visualization"
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
             <div className="sound-bars">
               {[...Array(7)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="sound-bar"
+                <motion.div key={i} className="sound-bar"
                   animate={{ scaleY: 0.2 + volume * (0.8 + Math.sin(i * 0.9) * 0.3) }}
-                  transition={{ duration: 0.1 }}
-                />
+                  transition={{ duration: 0.1 }} />
               ))}
             </div>
             <div className="listening-text">
               <IoVolumeHigh />
-              <span>Speak now — describe the item, its type and location…</span>
+              <span>Speak now — mention the item, location, date &amp; time…</span>
             </div>
           </motion.div>
         )}
@@ -316,44 +350,25 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       {/* Transcript Box */}
       <AnimatePresence>
         {(transcript || interimTranscript) && (
-          <motion.div
-            className="transcript-box"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-          >
-            <div className="transcript-label">
-              <IoInformationCircle /> What we heard
-            </div>
+          <motion.div className="transcript-box"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+            <div className="transcript-label"><IoInformationCircle /> What we heard</div>
             <div className="transcript-content">
               {transcript && <span className="final-transcript">{transcript}</span>}
-              {interimTranscript && (
-                <span className="interim-transcript"> {interimTranscript}</span>
-              )}
+              {interimTranscript && <span className="interim-transcript"> {interimTranscript}</span>}
             </div>
-
             {transcript && !isListening && (
               <motion.div className="transcript-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <motion.button
-                  className="action-btn ai-fill-btn"
-                  onClick={handleAnalyseWithAI}
-                  disabled={isProcessingAI}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                >
+                <motion.button className="action-btn ai-fill-btn" onClick={handleAnalyseWithAI}
+                  disabled={isProcessingAI} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                   {isProcessingAI
-                    ? <><span className="ai-spinner" /> Analysing with Google AI…</>
-                    : <><IoSparkles /> Auto-fill with Google AI</>
-                  }
+                    ? <><span className="ai-spinner" /> Analysing your speech…</>
+                    : <><IoSparkles /> Auto-fill form from speech</>}
                 </motion.button>
-
-                <button className="action-btn plain-btn" onClick={handleRawTranscript}>
+                <button className="action-btn plain-btn" onClick={() => onTranscript?.(transcript)}>
                   <IoCheckmark /> Use as description only
                 </button>
-
-                <button className="action-btn clear-btn" onClick={handleClear}>
-                  <IoClose />
-                </button>
+                <button className="action-btn clear-btn" onClick={handleClear}><IoClose /></button>
               </motion.div>
             )}
           </motion.div>
@@ -363,34 +378,22 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       {/* AI Preview Panel */}
       <AnimatePresence>
         {showPreview && aiResult && (
-          <motion.div
-            className="ai-preview-panel"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-          >
+          <motion.div className="ai-preview-panel"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
             <div className="ai-preview-header">
               <div className="ai-preview-title">
                 <IoSparkles className="sparkle-anim" />
-                <span>Google Gemini detected these fields</span>
+                <span>Smart parser detected these fields</span>
               </div>
-              <button className="close-preview-btn" onClick={() => setShowPreview(false)}>
-                <IoClose />
-              </button>
+              <button className="close-preview-btn" onClick={() => setShowPreview(false)}><IoClose /></button>
             </div>
-
             <div className="ai-fields-list">
               {Object.entries(aiResult).map(([field, value]) => {
                 if (!value) return null;
                 const applied = appliedFields.includes(field);
                 return (
-                  <motion.div
-                    key={field}
-                    className={`ai-field-row ${applied ? 'applied' : ''}`}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 }}
-                  >
+                  <motion.div key={field} className={`ai-field-row ${applied ? 'applied' : ''}`}
+                    initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}>
                     <div className="field-info">
                       <span className="field-icon">{FIELD_ICONS[field]}</span>
                       <div>
@@ -398,30 +401,20 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
                         <span className="field-value">{String(value)}</span>
                       </div>
                     </div>
-                    <button
-                      className={`apply-field-btn ${applied ? 'done' : ''}`}
-                      onClick={() => handleApplyField(field)}
-                      disabled={applied}
-                    >
+                    <button className={`apply-field-btn ${applied ? 'done' : ''}`}
+                      onClick={() => handleApplyField(field)} disabled={applied}>
                       {applied ? <><IoCheckmark /> Applied</> : 'Apply'}
                     </button>
                   </motion.div>
                 );
               })}
             </div>
-
             <div className="ai-preview-footer">
-              <motion.button
-                className="apply-all-btn"
-                onClick={handleApplyAll}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <motion.button className="apply-all-btn" onClick={handleApplyAll}
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <IoSparkles /> Apply All Fields to Form
               </motion.button>
-              <button className="retry-btn" onClick={handleAnalyseWithAI}>
-                <IoRefresh /> Re-analyse
-              </button>
+              <button className="retry-btn" onClick={handleAnalyseWithAI}><IoRefresh /> Re-analyse</button>
             </div>
           </motion.div>
         )}
@@ -430,14 +423,10 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       {/* Applied Banner */}
       <AnimatePresence>
         {appliedFields.length > 0 && !showPreview && (
-          <motion.div
-            className="applied-banner"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.div className="applied-banner"
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <IoCheckmark />
-            AI filled: <strong>{appliedFields.map(f => FIELD_LABELS[f] || f).join(', ')}</strong>
+            Filled: <strong>{appliedFields.map(f => FIELD_LABELS[f] || f).join(', ')}</strong>
           </motion.div>
         )}
       </AnimatePresence>
@@ -445,12 +434,8 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       {/* Error */}
       <AnimatePresence>
         {error && (
-          <motion.div
-            className="voice-error"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.div className="voice-error"
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <IoAlertCircle /> {error}
           </motion.div>
         )}
@@ -459,7 +444,7 @@ const VoiceInput = ({ onTranscript, onAIFill, existingText = '', placeholder = '
       {/* Tips */}
       {!isListening && !transcript && (
         <motion.div className="voice-tips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-          <p>💡 Try saying: <em>"I lost my black Samsung phone near the library on Monday"</em></p>
+          <p>💡 Try: <em>"I found a black phone at C424 this morning at 8am"</em></p>
         </motion.div>
       )}
 

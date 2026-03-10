@@ -36,7 +36,7 @@
 // Firebase configuration and initialization
 // Google Technology: Firebase SDK for Authentication and Cloud Messaging
 import { initializeApp } from 'firebase/app';
-import { getAuth, sendEmailVerification } from 'firebase/auth';
+import { getAuth, sendEmailVerification, GoogleAuthProvider } from 'firebase/auth';
 import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -60,5 +60,6 @@ export const messaging = getMessaging(app);
 
 // Export sendEmailVerification for use in AuthModal
 export { sendEmailVerification };
+export const googleProvider = new GoogleAuthProvider();
 
 export default app;

@@ -7,6 +7,7 @@ import ItemGallery from './pages/ItemGallery/ItemGallery.jsx';
 import ItemDetail from './pages/ItemDetail/ItemDetail.jsx';
 import SocialFeed from './pages/SocialFeed/SocialFeed.jsx';
 import Profile from './pages/Profile/Profile.jsx';
+import Messages from './pages/Messages/Messages.jsx';
 import DashboardLayout from './components/DashboardLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
@@ -54,6 +55,16 @@ function AppContent() {
           />
           <Route path="/gallery" element={<ItemGallery />} />
           <Route path="/item/:id" element={<ItemDetail />} />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Messages />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={

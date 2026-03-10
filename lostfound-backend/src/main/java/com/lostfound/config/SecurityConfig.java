@@ -44,8 +44,9 @@ public class SecurityConfig {
             .authenticationEntryPoint(new Http403ForbiddenEntryPoint())
             .and()
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/firebase-login", "/uploads/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/items", "/api/items/*").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/firebase-login", "/api/auth/reset-password", "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             );

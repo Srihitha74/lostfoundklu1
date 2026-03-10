@@ -130,9 +130,15 @@ public class ProfileService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (user.getPassword() == null || !passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
+        boolean isOAuthUser = user.getPassword() == null || user.getPassword().isEmpty();
+
+        if (!isOAuthUser) {
+            // Email/password users must verify current password
+            if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
+            }
         }
+        // OAuth users (Google/Microsoft) can set a password directly — no old password needed
 
         if (newPassword == null || newPassword.length() < 6) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be at least 6 characters");
@@ -155,7 +161,7 @@ public class ProfileService {
     }
 
     private ProfileDTO convertToDTO(User user) {
-        return new ProfileDTO(
+        ProfileDTO dto = new ProfileDTO(
             user.getId(),
             user.getName(),
             user.getEmail(),
@@ -168,5 +174,8 @@ public class ProfileService {
             user.getCreatedAt(),
             user.getUpdatedAt()
         );
+        // hasPassword = true only if they registered with email (have a bcrypt hash)
+        dto.setHasPassword(user.getPassword() != null && !user.getPassword().isEmpty());
+        return dto;
     }
 }

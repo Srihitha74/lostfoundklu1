@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { IoLocation, IoTime, IoChatbubble, IoClose } from 'react-icons/io5';
 import './ItemCard.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
 
-const ItemCard = ({ item, onDelete }) => {
+const ItemCard = ({ item, onDelete, isOwnItem = false }) => {
   const navigate = useNavigate();
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedItem, setMatchedItem] = useState(null);
@@ -97,18 +97,20 @@ const ItemCard = ({ item, onDelete }) => {
         </div>
         
         <div className="item-actions">
-          <motion.button
-            className="btn btn-sm btn-accent"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle chat
-            }}
-          >
-            <IoChatbubble />
-            Message
-          </motion.button>
+          {!isOwnItem && (
+            <motion.button
+              className="btn btn-sm btn-accent"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/item/${item.id}`);
+              }}
+            >
+              <IoChatbubble />
+              Message
+            </motion.button>
+          )}
           {onDelete && (
             <motion.button
               className="btn btn-sm btn-danger"

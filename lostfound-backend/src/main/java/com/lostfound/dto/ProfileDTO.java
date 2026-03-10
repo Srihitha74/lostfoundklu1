@@ -14,6 +14,7 @@ public class ProfileDTO {
     private Role role;
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
+    private boolean hasPassword;
 
     public ProfileDTO() {}
 
@@ -56,4 +57,6 @@ public class ProfileDTO {
     public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public boolean isHasPassword() { return hasPassword; }
+    public void setHasPassword(boolean hasPassword) { this.hasPassword = hasPassword; }
 }

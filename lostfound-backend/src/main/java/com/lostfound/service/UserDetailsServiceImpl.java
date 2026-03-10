@@ -1,6 +1,62 @@
+// package com.lostfound.service;
+
+// import com.lostfound.model.Role;
+// import com.lostfound.model.User;
+// import com.lostfound.repository.UserRepository;
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
+// import org.springframework.beans.factory.annotation.Autowired;
+// import org.springframework.security.core.authority.SimpleGrantedAuthority;
+// import org.springframework.security.core.userdetails.*;
+// import org.springframework.stereotype.Service;
+
+// import java.util.Collections;
+
+// @Service
+// public class UserDetailsServiceImpl implements UserDetailsService {
+
+//     private static final Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
+
+//     @Autowired
+//     private UserRepository userRepository;
+
+//     @Override
+//     public UserDetails loadUserByUsername(String email)
+//             throws UsernameNotFoundException {
+
+//         logger.info("Loading user by email: {}", email);
+        
+//         User user = userRepository.findByEmail(email)
+//                 .orElseThrow(() -> {
+//                     logger.error("User not found: {}", email);
+//                     return new UsernameNotFoundException("User not found: " + email);
+//                 });
+
+//         logger.info("User found: {}, role: {}", user.getEmail(), user.getRole());
+        
+//         // Handle case where role might be null - default to USER
+//         String roleName = "USER";
+//         if (user.getRole() != null) {
+//             roleName = user.getRole().name();
+//         } else {
+//             logger.warn("User {} has no role, defaulting to USER", email);
+//         }
+        
+//         logger.info("Creating UserDetails with role: {}", roleName);
+
+//         return org.springframework.security.core.userdetails.User
+//                 .withUsername(user.getEmail())
+//                 .password(user.getPassword() != null ? user.getPassword() : "")
+//                 .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName)))
+//                 .accountExpired(false)
+//                 .accountLocked(false)
+//                 .credentialsExpired(false)
+//                 .disabled(false)
+//                 .build();
+//     }
+// }
 package com.lostfound.service;
 
-import com.lostfound.model.Role;
 import com.lostfound.model.User;
 import com.lostfound.repository.UserRepository;
 import org.slf4j.Logger;
@@ -21,11 +77,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email)
-            throws UsernameNotFoundException {
-
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         logger.info("Loading user by email: {}", email);
-        
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     logger.error("User not found: {}", email);
@@ -33,20 +87,19 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 });
 
         logger.info("User found: {}, role: {}", user.getEmail(), user.getRole());
-        
-        // Handle case where role might be null - default to USER
-        String roleName = "USER";
-        if (user.getRole() != null) {
-            roleName = user.getRole().name();
-        } else {
-            logger.warn("User {} has no role, defaulting to USER", email);
-        }
-        
-        logger.info("Creating UserDetails with role: {}", roleName);
+
+        String roleName = (user.getRole() != null) ? user.getRole().name() : "USER";
+
+        // OAuth users (Google/Microsoft) have no password set.
+        // We use a placeholder so Spring Security doesn't reject the UserDetails object.
+        // JWT-based auth never checks this password — it only validates the JWT signature.
+        String password = (user.getPassword() != null && !user.getPassword().isEmpty())
+                ? user.getPassword()
+                : "{noop}OAUTH_USER_NO_PASSWORD";
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
-                .password(user.getPassword() != null ? user.getPassword() : "")
+                .password(password)
                 .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + roleName)))
                 .accountExpired(false)
                 .accountLocked(false)

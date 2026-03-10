@@ -19,42 +19,51 @@ public class ItemService {
         Item savedItem = itemRepository.save(item);
 
         // Perform keyword-based matching for newly created items
-        performAiMatching(savedItem);
+        try {
+            performAiMatching(savedItem);
+        } catch (Exception e) {
+            System.err.println("Error in AI matching: " + e.getMessage());
+            // Don't fail the save if AI matching fails
+        }
 
         return savedItem;
     }
 
     private void performAiMatching(Item newItem) {
-        List<Item> items = itemRepository.findAll();
+        try {
+            List<Item> items = itemRepository.findAllWithUser();
 
-        for (Item existing : items) {
-            if (existing.getId().equals(newItem.getId())) continue;
-            if (existing.getStatus().equals(newItem.getStatus())) continue;
+            for (Item existing : items) {
+                if (existing.getId().equals(newItem.getId())) continue;
+                if (existing.getStatus().equals(newItem.getStatus())) continue;
 
-            // Check keyword similarity in title and description
-            boolean keywordMatch = hasKeywordMatch(newItem, existing);
+                // Check keyword similarity in title and description
+                boolean keywordMatch = hasKeywordMatch(newItem, existing);
 
-            // Check if categories match or have common AI labels
-            boolean categoryMatch = existing.getCategory() != null && newItem.getCategory() != null &&
-                                   existing.getCategory().equalsIgnoreCase(newItem.getCategory());
+                // Check if categories match or have common AI labels
+                boolean categoryMatch = existing.getCategory() != null && newItem.getCategory() != null &&
+                                       existing.getCategory().equalsIgnoreCase(newItem.getCategory());
 
-            boolean labelMatch = hasCommonLabels(existing.getAiLabels(), newItem.getAiLabels());
+                boolean labelMatch = hasCommonLabels(existing.getAiLabels(), newItem.getAiLabels());
 
-            if (keywordMatch || (categoryMatch && labelMatch && !existing.getAiLabels().isEmpty() && !newItem.getAiLabels().isEmpty())) {
-                existing.setAiMatched(true);
-                newItem.setAiMatched(true);
+                if (keywordMatch || (categoryMatch && labelMatch && !existing.getAiLabels().isEmpty() && !newItem.getAiLabels().isEmpty())) {
+                    existing.setAiMatched(true);
+                    newItem.setAiMatched(true);
 
-                existing.setMatchedItemId(newItem.getId());
-                newItem.setMatchedItemId(existing.getId());
+                    existing.setMatchedItemId(newItem.getId());
+                    newItem.setMatchedItemId(existing.getId());
 
-                itemRepository.save(existing);
-                itemRepository.save(newItem);
+                    itemRepository.save(existing);
+                    itemRepository.save(newItem);
 
-                System.out.println("🤖 MATCH FOUND BETWEEN " +
-                        newItem.getId() + " (" + newItem.getTitle() + ") AND " + existing.getId() + " (" + existing.getTitle() + ")");
+                    System.out.println("🤖 MATCH FOUND BETWEEN " +
+                            newItem.getId() + " (" + newItem.getTitle() + ") AND " + existing.getId() + " (" + existing.getTitle() + ")");
 
-                break;
+                    break;
+                }
             }
+        } catch (Exception e) {
+            System.err.println("Error in AI matching loop: " + e.getMessage());
         }
     }
 
@@ -80,15 +89,15 @@ public class ItemService {
     }
 
     public Optional<Item> findById(Long id) {
-        return itemRepository.findById(id);
+        return itemRepository.findByIdWithUser(id);
     }
 
     public List<Item> findAll() {
-        return itemRepository.findAll();
+        return itemRepository.findAllWithUser();
     }
 
     public List<Item> findByUserId(Long userId) {
-        return itemRepository.findByUserId(userId);
+        return itemRepository.findByUserIdWithUser(userId);
     }
 
     public void deleteById(Long id) {

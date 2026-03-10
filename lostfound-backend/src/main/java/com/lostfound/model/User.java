@@ -2,11 +2,13 @@ package com.lostfound.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "users")
 public class User {
@@ -27,15 +29,15 @@ public class User {
     // ── ADD this field to User.java (inside the class, with other fields) ──
 
 @Column(name = "email_verified")
-private boolean emailVerified = false;
+private Boolean emailVerified = false;
 
 // ── ADD these getter/setter to User.java ──
 
-public boolean isEmailVerified() {
+public Boolean isEmailVerified() {
     return emailVerified;
 }
 
-public void setEmailVerified(boolean emailVerified) {
+public void setEmailVerified(Boolean emailVerified) {
     this.emailVerified = emailVerified;
 }
 

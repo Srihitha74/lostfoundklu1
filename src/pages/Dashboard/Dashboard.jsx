@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { IoAdd, IoSearch } from 'react-icons/io5';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import axios from 'axios';
 import ItemCard from '../../components/ItemCard/ItemCard.jsx';
 import './Dashboard.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
 
 const Dashboard = () => {
-  const [userName] = useState('User');
+  const { user } = useAuth();
+  const userName = user?.name || user?.email?.split('@')[0] || 'User';
   const [userItems, setUserItems] = useState([]);
   const [displayText, setDisplayText] = useState('');
   const [textIndex, setTextIndex] = useState(0);
@@ -153,7 +155,7 @@ const Dashboard = () => {
           {userItems.length > 0 ? (
             <div className="items-grid">
               {userItems.map((item) => (
-                <ItemCard key={item.id} item={item} onDelete={handleDeleteItem} />
+                <ItemCard key={item.id} item={item} onDelete={handleDeleteItem} isOwnItem={true} />
               ))}
             </div>
           ) : (

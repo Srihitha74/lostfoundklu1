@@ -6,6 +6,7 @@ import './HeroLanding.css';
 
 const HeroLanding = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authInitialTab, setAuthInitialTab] = useState('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
@@ -95,24 +96,37 @@ const HeroLanding = () => {
           <div className="heart"></div>
 
           {/* Story text */}
-          <div className="story-text">Girl walking with her book...</div>
+          <div className="story-text"></div>
         </div>
 
         <motion.div className="hero-login" variants={itemVariants}>
-          <p>Already have an account?
-            <button
+          <div style={{display:'flex',gap:'16px',justifyContent:'center',flexWrap:'wrap',marginTop:'8px'}}>
+            <motion.button
               className="login-link"
-              onClick={() => setIsAuthModalOpen(true)}
+              style={{background:'linear-gradient(135deg,#ffb38b,#e5989b)',color:'white',padding:'14px 36px',borderRadius:'60px',fontWeight:'600',fontSize:'1.1rem',border:'none',cursor:'pointer',boxShadow:'0 8px 20px rgba(229,152,155,0.3)'}}
+              onClick={() => { setAuthInitialTab('register'); setIsAuthModalOpen(true); }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Get Started
+            </motion.button>
+            <motion.button
+              className="login-link"
+              style={{background:'rgba(255,255,255,0.6)',color:'#2d3e4f',padding:'14px 36px',borderRadius:'60px',fontWeight:'600',fontSize:'1.1rem',border:'2px solid rgba(255,179,139,0.5)',cursor:'pointer',backdropFilter:'blur(8px)'}}
+              onClick={() => { setAuthInitialTab('login'); setIsAuthModalOpen(true); }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
               Sign In
-            </button>
-          </p>
+            </motion.button>
+          </div>
         </motion.div>
       </motion.div>
 
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        initialTab={authInitialTab}
       />
     </div>
   );

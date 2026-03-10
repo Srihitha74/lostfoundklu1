@@ -186,4 +186,47 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
+    @PostMapping("/profile/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request, Authentication authentication) {
+        try {
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+            }
+            String email = authentication.getName();
+            String oldPassword = request.get("oldPassword"); // null is fine for OAuth users
+            String newPassword = request.get("newPassword");
+            if (newPassword == null || newPassword.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "New password is required"));
+            }
+            profileService.changePassword(email, oldPassword, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Password set successfully"));
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Returns whether the current user is an OAuth user (no password set)
+    @GetMapping("/is-oauth-user")
+    public ResponseEntity<?> isOAuthUser(Authentication authentication) {
+        try {
+            if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            boolean isOAuth = profileService.isOAuthUser(authentication.getName());
+            return ResponseEntity.ok(Map.of("isOAuthUser", isOAuth));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
+    }
+    @GetMapping("/auth-type")
+    public ResponseEntity<?> getAuthType(Authentication authentication) {
+        try {
+            if (authentication == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            String email = authentication.getName();
+            boolean isOAuth = profileService.isOAuthUser(email);
+            return ResponseEntity.ok(Map.of("isOAuthUser", isOAuth));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

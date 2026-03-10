@@ -6,15 +6,22 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider,
+  OAuthProvider,
   reload
 } from 'firebase/auth';
 import { getToken } from 'firebase/messaging';
 import { auth, messaging } from '../../firebase';
+
+const googleProvider = new GoogleAuthProvider();
+const microsoftProvider = new OAuthProvider('microsoft.com');
+microsoftProvider.setCustomParameters({ tenant: '808cc83e-a546-47e7-a03f-73a1ebba24f3' });
 import './AuthModal.css';
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
 
-const AuthModal = ({ isOpen, onClose }) => {
+const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -24,6 +31,9 @@ const AuthModal = ({ isOpen, onClose }) => {
     name: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState(false);
   const [errors, setErrors] = useState({});
 
   // ── Email verification states ──────────────────────────────────────────
@@ -154,6 +164,89 @@ const AuthModal = ({ isOpen, onClose }) => {
   };
 
   // ── Main submit handler ────────────────────────────────────────────────
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) { setErrors({ general: 'Please enter your email.' }); return; }
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail, newPassword: 'TempPass123!' })
+      });
+      // Note: This is a simplified reset — in production use email-based reset
+      setForgotSuccess(true);
+    } catch (err) {
+      setErrors({ general: 'Failed to reset password.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const response = await fetch(`${API_BASE}/api/auth/firebase-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          uid: user.uid,
+          name: user.displayName || user.email.split('@')[0],
+          emailVerified: true
+        })
+      });
+      if (!response.ok) throw new Error('Google sign-in failed');
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      onClose();
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Google sign-in error:', err);
+      setErrors({ general: err.message || 'Google sign-in failed. Try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicrosoftSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signInWithPopup(auth, microsoftProvider);
+      const user = result.user;
+
+      // Restrict to KL University emails only
+      if (!user.email || !user.email.toLowerCase().endsWith('@kluniversity.in')) {
+        await auth.signOut();
+        setErrors({ general: 'Only @kluniversity.in email accounts are allowed.' });
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/auth/firebase-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          uid: user.uid,
+          name: user.displayName || user.email.split('@')[0],
+          emailVerified: true
+        })
+      });
+      if (!response.ok) throw new Error('Microsoft sign-in failed');
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      onClose();
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Microsoft sign-in error:', err);
+      setErrors({ general: err.message || 'Microsoft sign-in failed. Try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -484,6 +577,42 @@ const AuthModal = ({ isOpen, onClose }) => {
                   >
                     {isLoading ? <div className="loading-spinner" /> : (isLogin ? 'Sign In' : 'Create Account')}
                   </motion.button>
+
+                  <div className="auth-divider"><span>or continue with</span></div>
+                  <div className="social-buttons">
+                    <motion.button
+                      type="button"
+                      className="btn btn-google"
+                      onClick={handleGoogleSignIn}
+                      disabled={isLoading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 48 48" style={{marginRight:'8px',flexShrink:0}}>
+                        <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.8 5.5 3 13.5l7.8 6C12.6 13.2 17.9 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/>
+                        <path fill="#FBBC05" d="M10.8 28.5c-.5-1.5-.8-3.1-.8-4.8s.3-3.3.8-4.8l-7.8-6C1.1 16.1 0 19.9 0 24s1.1 7.9 3 11.1l7.8-6z"/>
+                        <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.1 0-11.4-3.7-13.2-9l-7.8 6C6.8 42.5 14.7 48 24 48z"/>
+                      </svg>
+                      Google
+                    </motion.button>
+                    <motion.button
+                      type="button"
+                      className="btn btn-microsoft"
+                      onClick={handleMicrosoftSignIn}
+                      disabled={isLoading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 21 21" style={{marginRight:'8px',flexShrink:0}}>
+                        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                        <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                        <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                      </svg>
+                      KL University
+                    </motion.button>
+                  </div>
                 </motion.form>
               )}
             </AnimatePresence>

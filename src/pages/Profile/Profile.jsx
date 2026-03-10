@@ -206,6 +206,11 @@ const Profile = () => {
       return;
     }
 
+    // OAuth users (Google/Microsoft) have no existing password — skip oldPassword
+    if (!profile?.hasPassword && !passwordData.oldPassword) {
+      passwordData = { ...passwordData, oldPassword: '' };
+    }
+
     try {
       const response = await fetch(`${API_BASE}/api/auth/profile/change-password`, {
         method: 'POST',
@@ -397,14 +402,21 @@ const Profile = () => {
             <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
               <motion.div className="password-modal" onClick={(e) => e.stopPropagation()} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
                 <div className="modal-header">
-                  <h3>Change Password</h3>
+                  <h3>{profile?.hasPassword ? 'Change Password' : 'Set Password'}</h3>
                   <button className="close-modal-btn" onClick={() => setShowPasswordModal(false)}><IoClose /></button>
                 </div>
+                {!profile?.hasPassword && (
+                  <p style={{background:'rgba(201,185,224,0.2)',borderRadius:'20px',padding:'10px 16px',fontSize:'0.9rem',color:'#2d3e4f',marginBottom:'16px'}}>
+                    🔐 You signed up with Google or Microsoft. You can set a password to also log in with email.
+                  </p>
+                )}
                 <form onSubmit={handlePasswordChange}>
+                  {profile?.hasPassword && (
                   <div className="form-group">
                     <label>Current Password</label>
                     <input type="password" value={passwordData.oldPassword} onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })} className="form-input" required />
                   </div>
+                  )}
                   <div className="form-group">
                     <label>New Password</label>
                     <input type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })} className="form-input" required minLength="6" />
@@ -414,7 +426,7 @@ const Profile = () => {
                     <input type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} className="form-input" required minLength="6" />
                   </div>
                   <div className="modal-actions">
-                    <button type="submit" className="btn btn-primary">Change Password</button>
+                    <button type="submit" className="btn btn-primary">{profile?.hasPassword ? 'Change Password' : 'Set Password'}</button>
                     <button type="button" className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>Cancel</button>
                   </div>
                 </form>
