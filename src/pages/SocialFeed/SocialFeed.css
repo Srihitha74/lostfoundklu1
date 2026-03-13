@@ -242,6 +242,34 @@
   margin: 0 0 20px;
 }
 
+/* ===== POST IMAGE CIRCLE ===== */
+.post-image-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 24px;
+}
+
+.post-image-circle {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: var(--dawn-blush);
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 8px 24px rgba(229, 152, 155, 0.2),
+    0 0 0 6px rgba(255, 179, 139, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-card:hover .post-image-circle {
+  transform: scale(1.04);
+  box-shadow:
+    0 12px 32px rgba(229, 152, 155, 0.3),
+    0 0 0 8px rgba(255, 179, 139, 0.2);
+}
+
+/* ===== POST META ===== */
 .post-meta {
   display: flex;
   align-items: center;
@@ -421,7 +449,7 @@
   height: 64px;
   border-radius: 50%;
   background: linear-gradient(145deg, var(--sunrise-peach), var(--horizon-coral));
-  border: none;
+  border: 2px solid rgba(255, 255, 255, 0.5);
   color: white;
   font-size: 2.4rem;
   display: flex;
@@ -431,7 +459,6 @@
   box-shadow: 0 8px 20px rgba(229, 152, 155, 0.4);
   z-index: 999;
   transition: all 0.3s;
-  border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 .floating-action:hover {
@@ -475,6 +502,10 @@
     height: 56px;
     font-size: 2rem;
   }
+  .post-image-circle {
+    width: 180px;
+    height: 180px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -491,5 +522,9 @@
   .post-meta {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .post-image-circle {
+    width: 150px;
+    height: 150px;
   }
 }

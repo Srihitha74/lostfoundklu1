@@ -285,6 +285,11 @@ public class Item {
     @JsonIgnoreProperties({"item"})  // ← breaks the Item→ItemImage→Item loop
     private List<ItemImage> images = new ArrayList<>();
 
+    // Messages linked to this item (cascade delete)
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"item", "sender", "receiver"})
+    private List<Message> messages = new ArrayList<>();
+
     // AI Detection Fields
     @Column(name = "ai_detected_category")
     private String aiDetectedCategory;

@@ -28,12 +28,10 @@ const SocialFeed = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Decode token to get email (simple base64 decode for JWT)
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setCurrentUserEmail(payload.sub || payload.email);
       } catch (e) {
-        // Fallback: try to get from profile API
         fetchUserProfile(token);
       }
     }
@@ -66,7 +64,7 @@ const SocialFeed = () => {
           username: item.user ? item.user.name : 'Unknown',
           userEmail: item.user ? item.user.email : '',
           ownerId: item.user ? item.user.id : null,
-          image: item.imageUrl ? `${API_BASE}${item.imageUrl}` : '/default-image.png' // Assuming a default image
+          image: item.imageUrl ? `${API_BASE}${item.imageUrl}` : null
         }));
         setPosts(mappedPosts);
         setFilteredPosts(mappedPosts);
@@ -94,12 +92,10 @@ const SocialFeed = () => {
   };
 
   const handleContactUser = (post) => {
-    // In a real app, this would open email client or show contact modal
     window.location.href = `mailto:${post.contactInfo}?subject=Regarding your ${post.type} item: ${post.title}`;
   };
 
   const handleMessageUser = (post) => {
-    // Navigate to item detail page with chat
     navigate(`/item/${post.id}`);
   };
 
@@ -107,9 +103,7 @@ const SocialFeed = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -118,9 +112,7 @@ const SocialFeed = () => {
     visible: {
       y: 0,
       opacity: 1,
-      transition: {
-        duration: 0.6
-      }
+      transition: { duration: 0.6 }
     }
   };
 
@@ -211,15 +203,18 @@ const SocialFeed = () => {
                     <h2 className="post-title">{post.title}</h2>
                     <p className="post-description">{post.description}</p>
 
-                    {post.image && post.image !== `${API_BASE}/default-image.png` && (
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        style={{width:'100%',maxHeight:'280px',objectFit:'cover',borderRadius:'24px',marginBottom:'12px'}}
-                        onError={e => { e.target.style.display='none'; }}
-                      />
+                    {/* ── Circle image ── */}
+                    {post.image && (
+                      <div className="post-image-wrapper">
+                        <img
+                          src={post.image}
+                          alt={post.title}
+                          className="post-image-circle"
+                          onError={e => { e.target.parentElement.style.display = 'none'; }}
+                        />
+                      </div>
                     )}
-                    
+
                     <div className="post-meta">
                       <div className="meta-item">
                         <IoLocation />
