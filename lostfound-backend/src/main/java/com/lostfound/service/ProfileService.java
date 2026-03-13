@@ -147,7 +147,12 @@ public class ProfileService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+    public boolean isOAuthUser(String email) {
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+    return user.getPassword() == null || user.getPassword().isEmpty();
+}
     private void deleteOldProfilePicture(String profilePictureUrl) {
         try {
             if (profilePictureUrl.startsWith("/uploads/profiles/")) {

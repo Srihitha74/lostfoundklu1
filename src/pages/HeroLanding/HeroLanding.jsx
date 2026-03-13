@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import AuthModal from '../../components/AuthModal/AuthModal.jsx';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import './HeroLanding.css';
 
 const HeroLanding = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authInitialTab, setAuthInitialTab] = useState('login');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-  }, []);
+  // Don't auto-redirect - show auth page always
+  // User can click login to open auth modal
 
   const containerVariants = {
     hidden: { opacity: 0 },

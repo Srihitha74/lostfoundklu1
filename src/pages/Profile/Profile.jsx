@@ -7,7 +7,7 @@ import {
 } from 'react-icons/io5';
 import './Profile.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -68,6 +68,7 @@ const Profile = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
+    window.location.reload();
   };
 
   const handleInputChange = (e) => {
@@ -207,9 +208,7 @@ const Profile = () => {
     }
 
     // OAuth users (Google/Microsoft) have no existing password — skip oldPassword
-    if (!profile?.hasPassword && !passwordData.oldPassword) {
-      passwordData = { ...passwordData, oldPassword: '' };
-    }
+    const oldPassword = (!profile?.hasPassword && !passwordData.oldPassword) ? '' : passwordData.oldPassword;
 
     try {
       const response = await fetch(`${API_BASE}/api/auth/profile/change-password`, {
@@ -219,7 +218,7 @@ const Profile = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          oldPassword: passwordData.oldPassword,
+          oldPassword: oldPassword,
           newPassword: passwordData.newPassword
         }),
       });

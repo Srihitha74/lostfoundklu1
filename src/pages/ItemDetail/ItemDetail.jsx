@@ -5,7 +5,7 @@
 // import axios from 'axios';
 // import './ItemDetail.css';
 
-// const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+// const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 // const ItemDetail = () => {
 //   const { id } = useParams();
@@ -379,7 +379,7 @@ import { IoArrowBack, IoLocation, IoTime, IoChatbubble } from 'react-icons/io5';
 import axios from 'axios';
 import './ItemDetail.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 const ItemDetail = () => {
   const { id } = useParams();

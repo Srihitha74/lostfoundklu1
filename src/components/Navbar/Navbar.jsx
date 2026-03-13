@@ -5,7 +5,7 @@ import { IoMenu, IoClose, IoChatbubble, IoChatbubbles } from 'react-icons/io5';
 import axios from 'axios';
 import './Navbar.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -48,6 +48,7 @@ const Navbar = () => {
     window.dispatchEvent(new Event('authChange'));
     navigate('/');
     setMobileMenuOpen(false);
+    window.location.reload();
   };
 
   const handleNavigation = (path) => {

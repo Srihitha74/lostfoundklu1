@@ -19,7 +19,7 @@ const microsoftProvider = new OAuthProvider('microsoft.com');
 microsoftProvider.setCustomParameters({ tenant: '808cc83e-a546-47e7-a03f-73a1ebba24f3' });
 import './AuthModal.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -127,6 +127,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
         if (response.ok) {
           const data = await response.json();
           localStorage.setItem('token', data.token);
+          window.dispatchEvent(new Event('authChange'));
 
           // Try to get FCM token
           try {
@@ -200,6 +201,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
       if (!response.ok) throw new Error('Google sign-in failed');
       const data = await response.json();
       localStorage.setItem('token', data.token);
+      window.dispatchEvent(new Event('authChange'));
       onClose();
       navigate('/dashboard');
     } catch (err) {
@@ -237,6 +239,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
       if (!response.ok) throw new Error('Microsoft sign-in failed');
       const data = await response.json();
       localStorage.setItem('token', data.token);
+      window.dispatchEvent(new Event('authChange'));
       onClose();
       navigate('/dashboard');
     } catch (err) {
@@ -288,6 +291,7 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
           if (response.ok) {
             const data = await response.json();
             localStorage.setItem('token', data.token);
+            window.dispatchEvent(new Event('authChange'));
             setIsLoading(false);
             onClose();
             navigate('/dashboard');
@@ -321,9 +325,11 @@ const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
           if (response.ok) {
             const data = await response.json();
             localStorage.setItem('token', data.token);
+            window.dispatchEvent(new Event('authChange'));
             setIsLoading(false);
             onClose();
-            navigate('/dashboard');
+            // Use location.href to force navigation
+            window.location.href = '/dashboard';
           } else {
             const errData = await response.json();
             if (errData.error === 'EMAIL_NOT_VERIFIED') {
