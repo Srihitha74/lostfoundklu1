@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: lostfound-backend
     ports:
-      - "8080:8080"
+      - "9090:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/lostfound?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
@@ -45,7 +45,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      VITE_BACKEND_URL: http://localhost:8080
+      VITE_BACKEND_URL: http://localhost:9090
     depends_on:
       - backend
     networks:
