@@ -24,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/items")
+// CORS handled globally by SecurityConfig via cors.allowed-origins property
 public class ItemController {
 
     @Autowired

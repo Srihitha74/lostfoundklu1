@@ -1,20 +1,40 @@
 services:
+  # MySQL Configuration (Commented out for PostgreSQL migration)
+  # db:
+  #   image: mysql:8.0
+  #   container_name: lostfound-mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: Sri@513947
+  #     MYSQL_DATABASE: lostfound
+  #     MYSQL_USER: lostfound_user
+  #     MYSQL_PASSWORD: lostfound_password
+  #   ports:
+  #     - "3308:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     timeout: 20s
+  #     retries: 10
+
+  # PostgreSQL Configuration
   db:
-    image: mysql:8.0
-    container_name: lostfound-mysql
+    image: postgres:15-alpine
+    container_name: lostfound-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: Sri@513947
-      MYSQL_DATABASE: lostfound
-      MYSQL_USER: lostfound_user
-      MYSQL_PASSWORD: lostfound_password
+      POSTGRES_DB: lostfound
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "3308:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lostfound"]
       timeout: 20s
       retries: 10
 
@@ -26,9 +46,14 @@ services:
     ports:
       - "9090:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/lostfound?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Sri@513947
+      # MySQL Configuration (Commented out for PostgreSQL migration)
+      # SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/lostfound?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      # SPRING_DATASOURCE_USERNAME: root
+      # SPRING_DATASOURCE_PASSWORD: Sri@513947
+      # PostgreSQL Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/lostfound
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     volumes:
       - uploads_data:/app/uploads
@@ -56,5 +81,6 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+  # mysql_data:
+  postgres_data:
   uploads_data:

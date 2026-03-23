@@ -14,6 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/messages")
+// CORS handled globally by SecurityConfig via cors.allowed-origins property
 public class MessageController {
 
     @Autowired

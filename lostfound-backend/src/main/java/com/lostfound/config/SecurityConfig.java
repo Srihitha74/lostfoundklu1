@@ -25,7 +25,9 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${cors.allowed-origins:http://localhost:5173,https://lostfoundklu1-7.onrender.com}")
+    // CORS allowed origins - configured via environment variable for production
+    // Default allows localhost for development
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:3000}")
     private String allowedOrigins;
 
     @Autowired
@@ -57,12 +59,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow all origins for development - more permissive for debugging
-        configuration.addAllowedOriginPattern("*");
+        
+        // Parse allowed origins from environment variable or default
+        String[] origins = allowedOrigins.split(",");
+        for (String origin : origins) {
+            configuration.addAllowedOrigin(origin.trim());
+        }
+        
+        // Allow common HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
