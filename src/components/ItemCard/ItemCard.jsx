@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { IoLocation, IoTime, IoChatbubble, IoClose } from 'react-icons/io5';
 import './ItemCard.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 const ItemCard = ({ item, onDelete, isOwnItem = false }) => {
   const navigate = useNavigate();

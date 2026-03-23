@@ -7,7 +7,7 @@ import axios from 'axios';
 import ItemCard from '../../components/ItemCard/ItemCard.jsx';
 import './Dashboard.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 const Dashboard = () => {
   const { user } = useAuth();

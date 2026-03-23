@@ -379,7 +379,7 @@ import { IoArrowBack, IoLocation, IoTime, IoChatbubble } from 'react-icons/io5';
 import axios from 'axios';
 import './ItemDetail.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 const ItemDetail = () => {
   const { id } = useParams();

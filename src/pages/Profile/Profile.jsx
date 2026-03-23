@@ -7,7 +7,7 @@ import {
 } from 'react-icons/io5';
 import './Profile.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);

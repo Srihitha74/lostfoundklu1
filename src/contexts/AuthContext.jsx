@@ -8,7 +8,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE = import.meta.env?.VITE_BACKEND_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);      // { token, name, email, id, profilePictureUrl }
