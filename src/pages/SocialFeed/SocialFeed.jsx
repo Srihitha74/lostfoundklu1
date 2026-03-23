@@ -13,7 +13,7 @@ import {
 import axios from 'axios';
 import './SocialFeed.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const SocialFeed = () => {
   const [posts, setPosts] = useState([]);

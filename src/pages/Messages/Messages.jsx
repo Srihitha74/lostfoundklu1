@@ -5,7 +5,7 @@ import { IoChatbubble, IoSend, IoArrowBack, IoEllipsisVertical } from 'react-ico
 import axios from 'axios';
 import './Messages.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 const POLL_MS  = 3000;
 
 const Messages = () => {

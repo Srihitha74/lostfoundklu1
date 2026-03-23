@@ -19,7 +19,7 @@ const microsoftProvider = new OAuthProvider('microsoft.com');
 microsoftProvider.setCustomParameters({ tenant: '808cc83e-a546-47e7-a03f-73a1ebba24f3' });
 import './AuthModal.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const AuthModal = ({ isOpen, onClose, initialTab = 'login' }) => {
   const [isLogin, setIsLogin] = useState(true);

@@ -5,7 +5,7 @@ import { IoMenu, IoClose, IoChatbubble, IoChatbubbles } from 'react-icons/io5';
 import axios from 'axios';
 import './Navbar.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Navbar = () => {
   const { user } = useAuth();
