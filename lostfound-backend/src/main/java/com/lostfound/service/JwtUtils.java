@@ -18,8 +18,8 @@ public class JwtUtils {
     private int jwtExpirationMs;
 
     public JwtUtils(@Value("${jwt.secret}") String base64Secret) {
-        byte[] decodedKey = Base64.getDecoder().decode(base64Secret);
-        this.key = Keys.hmacShaKeyFor(decodedKey);
+        // byte[] decodedKey = Base64.getDecoder().decode(base64Secret);
+        this.key = Keys.hmacShaKeyFor(base64Secret.getBytes());
     }
 
     public String generateToken(String email) {
