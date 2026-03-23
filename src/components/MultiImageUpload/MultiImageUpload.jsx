@@ -4,7 +4,7 @@ import { IoCloudUpload, IoClose, IoCheckmark, IoImage, IoSparkles } from 'react-
 import axios from 'axios';
 import './MultiImageUpload.css';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 

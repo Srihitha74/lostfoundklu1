@@ -519,7 +519,7 @@ import QuickTemplates, { TEMPLATES } from '../../components/QuickTemplates/Quick
 import './ItemReporting.css';
 import VoiceInput from '../../components/VoiceInput/VoiceInput';
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://backend:8080';
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 const ItemReporting = () => {
   const [currentStep, setCurrentStep] = useState(1);
